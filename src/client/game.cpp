@@ -348,24 +348,24 @@ void Game::processCloseContainer(int containerId)
     container->onClose();
 }
 
-void Game::processContainerAddItem(int containerId, const ItemPtr& item, int slot)
+void Game::processContainerAddItem(int containerId, const ItemPtr& item, int slot, uint16_t categoryId)
 {
     ContainerPtr container = getContainer(containerId);
     if(!container) {
         return;
     }
 
-    container->onAddItem(item, slot);
+    container->onAddItem(item, slot, categoryId);
 }
 
-void Game::processContainerUpdateItem(int containerId, int slot, const ItemPtr& item)
+void Game::processContainerUpdateItem(int containerId, int slot, const ItemPtr& item, uint16_t categoryId)
 {
     ContainerPtr container = getContainer(containerId);
     if(!container) {
         return;
     }
 
-    container->onUpdateItem(slot, item);
+    container->onUpdateItem(slot, item, categoryId);
 }
 
 void Game::processContainerRemoveItem(int containerId, int slot, const ItemPtr& lastItem)
@@ -378,12 +378,12 @@ void Game::processContainerRemoveItem(int containerId, int slot, const ItemPtr& 
     container->onRemoveItem(slot, lastItem);
 }
 
-void Game::processInventoryChange(int slot, const ItemPtr& item)
+void Game::processInventoryChange(int slot, const ItemPtr& item, uint16_t categoryId)
 {
-    if(item)
+    if (item)
         item->setPosition(Position(65535, slot, 0));
 
-    m_localPlayer->setInventoryItem((Otc::InventorySlot)slot, item);
+    m_localPlayer->setInventoryItem((Otc::InventorySlot)slot, item, categoryId);
 }
 
 void Game::processChannelList(const std::vector<std::tuple<int, std::string> >& channelList)
@@ -1599,7 +1599,7 @@ void Game::setProtocolVersion(int version)
     m_protocolVersion = version;
 
     Proto::buildMessageModesMap(version);
-
+    
     g_lua.callGlobalField("g_game", "onProtocolVersionChange", version);
 }
 
@@ -1672,4 +1672,55 @@ int Game::getOs()
     if (g_app.getOs() == "web")
         return 25;
     return 21; // linux
+}
+
+void Game::addLootCategory(const ThingPtr& thing, uint16_t categoryId)
+{
+    if (!canPerformGameAction() || !thing)
+        return;
+
+    if (!thing->isItem())
+        return;
+
+    ItemPtr item = thing->static_self_cast<Item>();
+    if (categoryId != 0xFFFF) {
+        item->setLootCategory(categoryId);
+    }
+
+    m_protocolGame->sendAddLootCategory(thing->getPosition(), thing->getId(), thing->getStackPos(), categoryId);
+}
+
+void Game::removeLootCategory(const ThingPtr& thing)
+{
+    if (!canPerformGameAction() || !thing)
+        return;
+
+    if (!thing->isItem())
+        return;
+
+    ItemPtr item = thing->static_self_cast<Item>();
+    item->setLootCategory(0);
+
+    m_protocolGame->sendRemoveLootCategory(thing->getPosition(), thing->getId(), thing->getStackPos());
+}
+
+void Game::processUpdateContainer(int containerId)
+{
+    ContainerPtr container = getContainer(containerId);
+    if (!container) {
+        g_logger.traceError("container not found");
+        return;
+    }
+
+    container->onUpdate();
+}
+
+void Game::addAutoLoot(uint16_t clientId, const std::string& name)
+{
+    m_protocolGame->sendUpdateAutoLoot(clientId, name, false);
+}
+
+void Game::removeAutoLoot(uint16_t clientId, const std::string& name)
+{
+    m_protocolGame->sendUpdateAutoLoot(clientId, name, true);
 }
