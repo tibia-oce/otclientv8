@@ -464,11 +464,11 @@ function createThingMenu(menuPosition, lookThing, useThing, creatureThing)
       if not useThing:isNotMoveable() and useThing:isPickupable() then
         if useThing:getLootCategory() ~= 0 then
           menu:addSeparator()
-          menu:addOption(tr('Remove loot category'), function() modules.game_containers.onRemoveLootCategory(useThing) end, shortcut, "#ff0000")
-          menu:addOption(tr('Edit loot category'), function() modules.game_containers.onLootCategory(useThing) end, shortcut, "#ffae00")
-          menu:addOption(tr('Pass loot category'), function() g_game.addLootCategory(useThing, LOOT_CATEGORY_COPY) end, shortcut, "#AAFF00")
+          menu:addOption(tr('Remove loot category'), function() modules.game_containers.onRemoveLootCategory(useThing) end, shortcut )
+          menu:addOption(tr('Edit loot category'), function() modules.game_containers.onLootCategory(useThing) end, shortcut )
+          menu:addOption(tr('Pass loot category'), function() g_game.addLootCategory(useThing, LOOT_CATEGORY_COPY) end, shortcut )
         else
-          menu:addOption(tr('Add loot category'), function() modules.game_containers.onLootCategory(useThing) end, shortcut, "#fbff00")
+          menu:addOption(tr('Add loot category'), function() modules.game_containers.onLootCategory(useThing) end, shortcut )
         end
       end
     else
@@ -480,11 +480,11 @@ function createThingMenu(menuPosition, lookThing, useThing, creatureThing)
     end
     if useThing:isPickupable() then
       menu:addSeparator()
-      menu:addOption(tr('Open auto loot list'), function() openAutolootWindow() end, shortcut, "#00fffb")
+      menu:addOption(tr('Open auto loot list'), function() openAutolootWindow() end, shortcut )
       if localPlayer:isInAutoLootList(useThing:getId()) then
-        menu:addOption(tr('Remove from auto loot list'), function() localPlayer:removeAutoLoot(useThing:getId()) end, shortcut, "#ff0000")
+        menu:addOption(tr('Remove from auto loot list'), function() localPlayer:removeAutoLoot(useThing:getId()) end, shortcut )
       else
-        menu:addOption(tr('Add to auto loot list'), function() localPlayer:addAutoLoot(useThing:getId()) end, shortcut, "#22ff00")
+        menu:addOption(tr('Add to auto loot list'), function() localPlayer:addAutoLoot(useThing:getId()) end, shortcut )
       end
     end
 
@@ -1274,7 +1274,6 @@ function clearSearchEdit()
   if not autolootWindow then
     return true
   end
-
   autolootWindow:getChildById("textSearch"):clearText()
 end
 
