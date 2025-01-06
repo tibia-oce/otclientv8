@@ -76,7 +76,6 @@ function refreshContainerItems(container)
     local itemWidget = container.itemsPanel:getChildById('item' .. slot)
     local item = container:getItem(slot)
     itemWidget:setItem(item)
-    g_game.updateRarityFrames(itemWidget, item and item:getRarityId() or 0)
 
 		local categoryIdWidget = itemWidget:getChildById('lootCategoryId')
     categoryIdWidget:hide()
@@ -221,7 +220,6 @@ function onContainerOpen(container, previousContainer)
     itemWidget:setItem(item)
     itemWidget:setMargin(0)
     itemWidget.position = container:getSlotPosition(slot)
-    g_game.updateRarityFrames(itemWidget, item and item:getRarityId() or 0)
 
     local categoryIdWidget = itemWidget:getChildById('lootCategoryId')
     categoryIdWidget:hide()
@@ -277,8 +275,8 @@ function onContainerUpdateItem(container, slot, item, oldItem)
   if not container.window then return end
   local itemWidget = container.itemsPanel:getChildById('item' .. slot)
   itemWidget:setItem(item)
-  g_game.updateRarityFrames(itemWidget, item and item:getRarityId() or 0)
-local categoryIdWidget = itemWidget:getChildById('lootCategoryId')
+
+  local categoryIdWidget = itemWidget:getChildById('lootCategoryId')
   categoryIdWidget:hide()
   if item then
     local iconId = getIconId(item:getLootCategory())
