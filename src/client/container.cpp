@@ -145,8 +145,3 @@ void Container::updateItemsPositions()
     for(int slot = 0; slot < (int)m_items.size(); ++slot)
         m_items[slot]->setPosition(getSlotPosition(slot));
 }
-
-void Container::onUpdate()
-{
-    callLuaField("onUpdate");
-}

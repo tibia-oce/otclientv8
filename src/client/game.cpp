@@ -1711,8 +1711,6 @@ void Game::processUpdateContainer(int containerId)
         g_logger.traceError("container not found");
         return;
     }
-
-    container->onUpdate();
 }
 
 void Game::addAutoLoot(uint16_t clientId, const std::string& name)

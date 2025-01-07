@@ -50,7 +50,7 @@ public:
     int getSize() { return m_size; }
     int getFirstIndex() { return m_firstIndex; }
     ItemPtr findItemById(uint itemId, int subType);
-    
+
 protected:
     void onOpen(const ContainerPtr& previousContainer);
     void onClose();
@@ -58,7 +58,6 @@ protected:
     void onAddItems(const std::vector<ItemPtr>& items);
     void onUpdateItem(int slot, const ItemPtr& item, uint16_t categoryId);
     void onRemoveItem(int slot, const ItemPtr& lastItem);
-    void onUpdate();
 
     friend class Game;
 
