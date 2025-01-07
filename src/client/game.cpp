@@ -20,6 +20,7 @@
  * THE SOFTWARE.
  */
 
+#include <sstream>
 #include "game.h"
 #include "localplayer.h"
 #include "map.h"
@@ -1676,39 +1677,33 @@ int Game::getOs()
 
 void Game::addLootCategory(const ThingPtr& thing, uint16_t categoryId)
 {
-    if (!canPerformGameAction() || !thing)
+    if (!canPerformGameAction() || !thing || !thing->isItem()) {
         return;
-
-    if (!thing->isItem())
-        return;
-
-    ItemPtr item = thing->static_self_cast<Item>();
+    }
+    auto item = thing->static_self_cast<Item>();
     if (categoryId != 0xFFFF) {
         item->setLootCategory(categoryId);
     }
-
     m_protocolGame->sendAddLootCategory(thing->getPosition(), thing->getId(), thing->getStackPos(), categoryId);
 }
 
 void Game::removeLootCategory(const ThingPtr& thing)
 {
-    if (!canPerformGameAction() || !thing)
+    if (!canPerformGameAction() || !thing || !thing->isItem()) {
         return;
-
-    if (!thing->isItem())
-        return;
-
-    ItemPtr item = thing->static_self_cast<Item>();
+    }
+    auto item = thing->static_self_cast<Item>();
     item->setLootCategory(0);
-
     m_protocolGame->sendRemoveLootCategory(thing->getPosition(), thing->getId(), thing->getStackPos());
 }
 
 void Game::processUpdateContainer(int containerId)
 {
-    ContainerPtr container = getContainer(containerId);
+    auto container = getContainer(containerId);
     if (!container) {
-        g_logger.traceError("container not found");
+        std::ostringstream oss;
+        oss << "Container not found. ID: " << containerId;
+        g_logger.traceError(oss.str());
         return;
     }
     container->onUpdate();

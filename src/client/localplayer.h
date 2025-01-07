@@ -99,9 +99,10 @@ public:
     void addAutoLoot(uint16_t clientId, const std::string& name);
     void removeAutoLoot(uint16_t clientId, const std::string& name);
     bool isInAutoLootList(uint16_t clientId);
-    void manageAutoloot(const std::map<uint16_t, std::string>& items, bool remove);
     void addToAutolootList(uint16_t clientId, const std::string& name);
     void removeFromAutolootList(uint16_t clientId);
+    void manageAutoloot(const std::map<uint16_t, std::string>& items, bool remove);
+    void notifyAutoLootUpdate(uint16_t clientId, const std::string& name, bool remove);
 
     std::map<uint16_t, std::string> getAutolootItems() { return m_autolootItems; }
 

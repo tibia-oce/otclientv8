@@ -77,7 +77,6 @@ currentMessageIndex = 0
 ignoreNpcMessages = false
 defaultTab = nil
 serverTab = nil
-lootTab = nil
 violationsChannelId = nil
 violationWindow = nil
 violationReportTab = nil
@@ -1789,7 +1788,6 @@ end
 function online()
   defaultTab = addTab(tr('Default'), true)
   serverTab = addTab(tr('Server Log'), false)
-  lootTab = addTab(tr('Loot'), false)
 
   if g_game.getClientVersion() >= 820 then
     local tab = addTab("NPCs", false)
