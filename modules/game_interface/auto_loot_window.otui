@@ -86,7 +86,7 @@ Window
 
   TextEdit
     id: textEdit
-    image-source: /images/ui/tooltip2
+    image-source: /images/ui/tooltip
     anchors.top: parent.top
     anchors.left: parent.left
     anchors.right: parent.right
@@ -102,7 +102,7 @@ Window
 
   TextEdit
     id: textSearch
-    image-source: /images/ui/tooltip2
+    image-source: /images/ui/tooltip
     anchors.top: prev.bottom
     anchors.left: parent.left
     anchors.right: parent.right
@@ -112,7 +112,7 @@ Window
 
   UIWidget
     id: clearSearch
-    image-source: /images/ui/button_close
+    image-source: /images/options/button-clear
     anchors.top: prev.top
     margin-top: 1
     anchors.right: prev.right
