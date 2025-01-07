@@ -78,7 +78,6 @@ ignoreNpcMessages = false
 defaultTab = nil
 serverTab = nil
 lootTab = nil
-npcTab = nil
 violationsChannelId = nil
 violationWindow = nil
 violationReportTab = nil
@@ -912,6 +911,7 @@ function getNewHighlightedText(text, color, highlightColor)
 end
 
 function onConsoleTextClicked(widget, text)
+  local npcTab = consoleTabBar:getTab("NPCs")
   if npcTab then
     sendMessage(text, npcTab)
   end
@@ -1789,9 +1789,12 @@ end
 function online()
   defaultTab = addTab(tr('Default'), true)
   serverTab = addTab(tr('Server Log'), false)
-  npcTab = addTab(tr('NPCs'), false)
   lootTab = addTab(tr('Loot'), false)
 
+  if g_game.getClientVersion() >= 820 then
+    local tab = addTab("NPCs", false)
+    tab.npcChat = true
+  end
 
   if g_game.getClientVersion() < 862 then
     Keybind.new("Dialogs", "Open Rule Violation", "Ctrl+R", "")
