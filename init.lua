@@ -16,7 +16,6 @@ Services = {
 -- Servers accept http login url, websocket login url or ip:port:version
 Servers = {
   Mythbound = "game.mythbound.dev:7171:1098",
-  Local = "127.0.0.1:7171:1098"
 }
 
 --Server = "ws://otclient.ovh:3000/"
