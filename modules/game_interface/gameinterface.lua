@@ -467,7 +467,7 @@ function createThingMenu(menuPosition, lookThing, useThing, creatureThing)
           menu:addOption(tr('Remove loot category'), function() modules.game_containers.onRemoveLootCategory(useThing) end, shortcut )
           menu:addOption(tr('Edit loot category'), function() modules.game_containers.onLootCategory(useThing) end, shortcut )
           menu:addOption(tr('Pass loot category'), function() g_game.addLootCategory(useThing, LOOT_CATEGORY_COPY) end, shortcut )
-        else
+        elseif useThing:getParentContainer() then
           menu:addOption(tr('Add loot category'), function() modules.game_containers.onLootCategory(useThing) end, shortcut )
         end
       end

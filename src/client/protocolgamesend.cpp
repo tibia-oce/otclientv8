@@ -1222,7 +1222,7 @@ void ProtocolGame::addPosition(const OutputMessagePtr& msg, const Position& posi
 
 void ProtocolGame::sendRemoveLootCategory(const Position& pos, int thingId, int stackpos)
 {
-    OutputMessagePtr msg(new OutputMessage);
+    auto msg = std::make_shared<OutputMessage>();
     msg->addU8(Proto::ClientRemoveLootCategory);
     addPosition(msg, pos);
     msg->addU16(thingId);
@@ -1232,7 +1232,7 @@ void ProtocolGame::sendRemoveLootCategory(const Position& pos, int thingId, int 
 
 void ProtocolGame::sendAddLootCategory(const Position& pos, int thingId, int stackpos, uint16_t categoryId)
 {
-    OutputMessagePtr msg(new OutputMessage);
+    auto msg = std::make_shared<OutputMessage>();
     msg->addU8(Proto::ClientAddLootCategory);
     addPosition(msg, pos);
     msg->addU16(thingId);
@@ -1243,7 +1243,7 @@ void ProtocolGame::sendAddLootCategory(const Position& pos, int thingId, int sta
 
 void ProtocolGame::sendUpdateAutoLoot(uint16_t clientId, const std::string& name, bool remove)
 {
-    OutputMessagePtr msg(new OutputMessage);
+    auto msg = std::make_shared<OutputMessage>();
     msg->addU8(Proto::ClientUpdateAutoLoot);
     msg->addU16(clientId);
     msg->addString(name);

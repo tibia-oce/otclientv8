@@ -429,6 +429,23 @@ void LocalPlayer::turn(Otc::Direction direction)
     callLuaField("onTurn", direction);
 }
 
+void LocalPlayer::setInventoryItem(Otc::InventorySlot inventory, const ItemPtr& item, uint16_t categoryId)
+{
+    if(inventory >= Otc::LastInventorySlot) {
+        g_logger.traceError("invalid slot");
+        return;
+    }
+
+    if(m_inventoryItems[inventory] != item) {
+        ItemPtr oldItem = m_inventoryItems[inventory];
+        m_inventoryItems[inventory] = item;
+        if (item) {
+            item->setLootCategory(categoryId);
+        }
+        callLuaField("onInventoryChange", inventory, item, oldItem);
+    }
+}
+
 void LocalPlayer::setStates(int states)
 {
     if(m_states != states) {
@@ -657,23 +674,6 @@ void LocalPlayer::addAutoLoot(uint16_t clientId, const std::string& name)
 {
     if (!isInAutoLootList(clientId)) {
         g_game.addAutoLoot(clientId, name);
-    }
-}
-
-void LocalPlayer::setInventoryItem(Otc::InventorySlot inventory, const ItemPtr& item, uint16_t categoryId)
-{
-    if(inventory >= Otc::LastInventorySlot) {
-        g_logger.traceError("invalid slot");
-        return;
-    }
-
-    if(m_inventoryItems[inventory] != item) {
-        ItemPtr oldItem = m_inventoryItems[inventory];
-        m_inventoryItems[inventory] = item;
-        if (item) {
-            item->setLootCategory(categoryId);
-        }
-        callLuaField("onInventoryChange", inventory, item, oldItem);
     }
 }
 

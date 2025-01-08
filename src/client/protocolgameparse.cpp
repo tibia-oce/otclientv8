@@ -3231,11 +3231,16 @@ void ProtocolGame::parseAutoloot(const InputMessagePtr& msg)
 {
     bool remove = msg->getU8() == 1;
     uint16_t size = msg->getU16();
+
+    if (msg->getUnreadSize() < size * (sizeof(uint16_t) + 1)) {
+        g_logger.error("Invalid autoloot data size [0x60 - ProtocolGame::parseAutoloot]");
+        return;
+    }
     std::map<uint16_t, std::string> autolootItems;
     for (uint16_t i = 1; i <= size; ++i) {
         autolootItems.insert_or_assign(msg->getU16(), msg->getString());
     }
-
+    
     m_localPlayer->manageAutoloot(autolootItems, remove);
 }
 
