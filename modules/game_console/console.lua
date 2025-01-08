@@ -1789,7 +1789,7 @@ function online()
   defaultTab = addTab(tr('Default'), true)
   serverTab = addTab(tr('Server Log'), false)
 
-  
+
   if g_game.getClientVersion() >= 820 then
     local tab = addTab("NPCs", false)
     tab.npcChat = true
