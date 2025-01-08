@@ -1,7 +1,7 @@
 LootCategory < UIWidget
   text-offset: 40 2
   text-align: left
-  height: 24
+  height: 25
   $!checked:
     background-color: alpha
   $hover !checked:
@@ -31,17 +31,17 @@ LootCategory < UIWidget
   UIWidget
     id: categoryIcon
     image-source: icons
-    size: 19 19
+    size: 20 20
     anchors.left: parent.left
     anchors.verticalcenter: parent.verticalcenter
     virtual: true
     enabled: false
-    margin-left: 2
+    margin-left: 10
     phantom: true
 
 Window
   anchors.centerIn: parent
-  size: 470 305
+  size: 235 305
   image-source: /images/ui/panel_map
   @onEscape: modules.game_containers.destroyLoot()
   @onEnter: modules.game_containers.addLootCategory()
@@ -53,42 +53,32 @@ Window
     phantom: true
 
   Button
-    id: button
-    width: 90
+    width: 96
     anchors.left: parent.horizontalcenter
     anchors.bottom: parent.bottom
-    margin-left: 2
+    margin-left: 4
+    !text: tr('Cancel')
+    @onClick: modules.game_containers.destroyLoot()
+
+  Button
+    id: button
+    width: 96
+    anchors.right: parent.horizontalcenter
+    anchors.bottom: prev.bottom
+    margin-right: 4
     enabled: false
     !text: tr('Accept')
     @onClick: modules.game_containers.addLootCategory()
 
-  Button
-    width: 90
-    anchors.right: parent.horizontalcenter
-    anchors.bottom: prev.bottom
-    margin-right: 2
-    !text: tr('Cancel')
-    @onClick: modules.game_containers.destroyLoot()
-
   FlatPanel
     id: categoriesList
     anchors.top: parent.top
-    anchors.left: parent.left
-    anchors.right: parent.horizontalcenter
-    height: 219
-    margin-top: 8
+    anchors.horizontalCenter: parent.horizontalCenter
+    height: 220
+    width: 200
     image-source: /images/ui/panel_side
     focusable: false
-    padding: 2
     layout:
       type: verticalBox
-
-  Label
-    anchors.top: prev.top
-    anchors.bottom: prev.bottom
-    anchors.left: parent.horizontalcenter
-    anchors.right: parent.right
-    margin-left: 4
-    text-wrap: true
-    text-align: center
-    !text: tr("By selecting the loot category for the container, all items picked by auto-loot or bought in the shop will go to the designated containers.\n\nWarning! Remember to select the category for all containers you want to use to store specific types of items. Otherwise, all things will go to your main backpack.")
+    border-width: 1
+    border-color: #383838
