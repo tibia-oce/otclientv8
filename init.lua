@@ -1,7 +1,7 @@
 -- CONFIG
 APP_NAME = "otclientv8"  -- important, change it, it's name for config dir and files in appdata
 APP_VERSION = 1098       -- client version for updater and login to identify outdated client
-DEFAULT_LAYOUT = "retro" -- on android it's forced to "mobile", check code bellow
+DEFAULT_LAYOUT = "retro"
 
 -- If you don't use updater or other service, set it to updater = ""
 Services = {
@@ -45,9 +45,7 @@ g_configs.loadSettings("/config.otml")
 -- set layout
 local settings = g_configs.getSettings()
 local layout = DEFAULT_LAYOUT
-if g_app.isMobile() then
-  layout = "mobile"
-elseif settings:exists('layout') then
+if settings:exists('layout') then
   layout = settings:getValue('layout')
 end
 g_resources.setLayout(layout)
