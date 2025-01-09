@@ -10,6 +10,8 @@ on:
       - "data/**"
       - "mods/**"
       - "modules/**"
+      - "layouts/**"
+      - ".github/**"
       - "src/**"
   push:
     branches:
@@ -19,6 +21,7 @@ on:
       - "data/**"
       - "mods/**"
       - "modules/**"
+      - "layouts/**"
       - "src/**"
 
 env:
