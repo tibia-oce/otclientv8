@@ -30,7 +30,7 @@ LootCategory < UIWidget
 
   UIWidget
     id: categoryIcon
-    image-source: icons
+    image-source: /game_containers/images/loot_categories
     size: 20 20
     anchors.left: parent.left
     anchors.verticalcenter: parent.verticalcenter

@@ -13,6 +13,7 @@ local categoriesIds = {
 }
 
 function init()
+  g_ui.importStyle('containers')
   connect(Container, { onOpen = onContainerOpen,
                        onClose = onContainerClose,
                        onSizeChange = onContainerChangeSize,
@@ -376,7 +377,7 @@ end
 
 function onLootCategory(item)
 	if not lootWindow then
-		lootWindow = g_ui.displayUI('container_loot_category')
+		lootWindow = g_ui.displayUI('loot_categories')
 		lootWindow.item = item
 		categoriesList = lootWindow:getChildById('categoriesList')
 		acceptButton = lootWindow:getChildById('button')
