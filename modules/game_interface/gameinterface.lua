@@ -1334,21 +1334,14 @@ function removeFromAutolootList(self)
 end
 
 function addToAutolootList()
-  print(1)
   if not autolootWindow then
     return true
   end
-
-  print(2)
   local localPlayer = g_game.getLocalPlayer()
   local text = autolootTextEdit:getText()
   if tonumber(text) then
-    -- Send clientId
     localPlayer:addAutoLoot(tonumber(text), "")
-    print(3)
   else
-    -- Send name
     localPlayer:addAutoLoot(0, text)
-    print(4)
   end
 end
