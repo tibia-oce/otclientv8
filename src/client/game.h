@@ -350,7 +350,6 @@ public:
 
     bool canPerformGameAction();
     bool checkBotProtection();
-
     void addAutoLoot(uint16_t clientId, const std::string& name);
     void removeAutoLoot(uint16_t clientId, const std::string& name);
 

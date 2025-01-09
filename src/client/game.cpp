@@ -381,7 +381,7 @@ void Game::processContainerRemoveItem(int containerId, int slot, const ItemPtr& 
 
 void Game::processInventoryChange(int slot, const ItemPtr& item, uint16_t categoryId)
 {
-    if (item)
+    if(item)
         item->setPosition(Position(65535, slot, 0));
 
     m_localPlayer->setInventoryItem((Otc::InventorySlot)slot, item, categoryId);
@@ -1600,7 +1600,7 @@ void Game::setProtocolVersion(int version)
     m_protocolVersion = version;
 
     Proto::buildMessageModesMap(version);
-    
+
     g_lua.callGlobalField("g_game", "onProtocolVersionChange", version);
 }
 
