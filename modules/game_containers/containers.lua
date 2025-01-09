@@ -22,7 +22,6 @@ function init()
     onGameStart = markStart,
     onGameEnd = clean
   })
-  g_ui.importStyle('containers')
   reloadContainers()
 end
 
