@@ -246,7 +246,8 @@ void Outfit::draw(Point dest, Otc::Direction direction, uint walkAnimationPhase,
             auraDest += offset * g_sprites.getOffsetFactor();
         }
     }
-    if (m_aura && (!g_game.getFeature(Otc::GameDrawAuraOnTop) or g_game.getFeature(Otc::GameAuraFrontAndBack))) {
+
+    if (m_aura && (!g_game.getFeature(Otc::GameDrawAuraOnTop) || g_game.getFeature(Otc::GameAuraFrontAndBack))) {
         drawAura();
     }
   
