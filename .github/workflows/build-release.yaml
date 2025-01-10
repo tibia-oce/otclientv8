@@ -47,7 +47,7 @@ jobs:
             triplet: x64-linux
             artifact-name: otclient
             packages: sccache
-          - os: macos-12
+          - os: macOS-14
             buildtype: macos-release
             triplet: x64-osx
             artifact-name: otclient
@@ -100,13 +100,24 @@ jobs:
       with:
         vcpkgDirectory: '${{ github.workspace }}/vcpkg'
 
-    - name: Restore artifacts and install vcpkg
-      id: vcpkg-step
+    - name: Restore artifacts and install vcpkg (Windows)
+      if: runner.os == 'Windows'
+      id: vcpkg-step-windows
+      shell: pwsh
       run: |
         $json=Get-Content vcpkg.json -Raw | ConvertFrom-Json
         $vcpkgCommitId=$json.'builtin-baseline'
         Write-Host "vcpkg commit ID: $vcpkgCommitId"
-        echo "vcpkgGitCommitId=$vcpkgCommitId" >> "$GITHUB_OUTPUT"
+        echo "vcpkgGitCommitId=$vcpkgCommitId" >> "$env:GITHUB_OUTPUT"
+
+    - name: Restore artifacts and install vcpkg (Unix)
+      if: runner.os != 'Windows'
+      id: vcpkg-step-unix
+      shell: bash
+      run: |
+        vcpkgCommitId=$(cat vcpkg.json | grep -o '"builtin-baseline": *"[^"]*"' | cut -d'"' -f4)
+        echo "vcpkg commit ID: $vcpkgCommitId"
+        echo "vcpkgGitCommitId=$vcpkgCommitId" >> $GITHUB_OUTPUT
 
     - name: Get latest CMake and ninja
       uses: lukka/get-cmake@latest
@@ -206,7 +217,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-          pattern: client-zip-*
+          pattern: 'client-*'
 
       - name: List downloaded artifacts
         run: ls -R artifacts/
@@ -252,11 +263,24 @@ jobs:
         run: |
           npx semantic-release --ci
           RELEASE_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
-          for artifact in artifacts/client-zip-*/client.zip; do
-            build_type=$(echo $artifact | cut -d/ -f2)
-            gh release upload "$RELEASE_TAG" "$artifact" --clobber \
-              --name "client-${build_type}-${RELEASE_TAG}.zip"
-          done
+          
+          # Windows artifact
+          if [ -f "artifacts/client-windows-2022-windows-release/client.zip" ]; then
+            gh release upload "$RELEASE_TAG" "artifacts/client-windows-2022-windows-release/client.zip" --clobber \
+              --name "otclient-windows-${RELEASE_TAG}.zip"
+          fi
+          
+          # Linux artifact
+          if [ -f "artifacts/client-ubuntu-22.04-linux-release/client.tar.gz" ]; then
+            gh release upload "$RELEASE_TAG" "artifacts/client-ubuntu-22.04-linux-release/client.tar.gz" --clobber \
+              --name "otclient-linux-${RELEASE_TAG}.tar.gz"
+          fi
+          
+          # macOS artifact
+          if [ -f "artifacts/client-macOS-14-macos-release/client.zip" ]; then
+            gh release upload "$RELEASE_TAG" "artifacts/client-macOS-14-macos-release/client.zip" --clobber \
+              --name "otclient-macos-${RELEASE_TAG}.zip"
+          fi
 
       # https://semantic-release.gitbook.io/semantic-release/usage/workflow-configuration#pre-release-branches
       # Semantic-release appends a numerical suffix to all pre-releases by default (e.g., `v0.0.1-rc.1`).
