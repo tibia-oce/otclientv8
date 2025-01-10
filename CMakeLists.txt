@@ -56,12 +56,17 @@ target_link_libraries(${PROJECT_NAME}
     ${framework_LIBRARIES}
 )
 
+# Windows-specific linking
+if(WIN32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE winmm)
+endif()
+
 # macOS specific linking
 if(APPLE AND USE_STATIC_LIBS)
     target_link_libraries(${PROJECT_NAME} "-framework Foundation" "-framework IOKit")
 endif()
 
-# Backtrace map generation
-if(NOT APPLE AND NOT WASM)
+# Backtrace map generation - only for non-MSVC platforms
+if(NOT APPLE AND NOT WASM AND NOT MSVC)
     set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -no-pie -Wl,-Map=${PROJECT_NAME}.map")
 endif()
