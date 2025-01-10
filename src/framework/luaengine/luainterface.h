@@ -369,7 +369,7 @@ extern LuaInterface g_lua;
 
 template<typename T, typename... Args>
 int LuaInterface::polymorphicPush(const T& v, const Args&... args) {
-    int r = push_luavalue(v);
+    int r = push_luavalue(static_cast<lua_Integer>(v));
     return r + polymorphicPush(args...);
 }
 
