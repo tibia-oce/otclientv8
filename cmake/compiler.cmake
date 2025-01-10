@@ -10,6 +10,15 @@ else()
     set(WARNS_FLAGS "-Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-unused-result")
 endif()
 
+# Platform definitions
+if(WIN32)
+    add_definitions(-DPLATFORM_WINDOWS)
+elseif(APPLE)
+    add_definitions(-DPLATFORM_APPLE -DUSE_SDL2)
+elseif(UNIX)
+    add_definitions(-DPLATFORM_UNIX)
+endif()
+
 # Add framework definitions first
 if(FRAMEWORK_GRAPHICS)
     add_definitions(-DFW_GRAPHICS)
