@@ -66,6 +66,7 @@ jobs:
     - name: Install macOS Dependencies
       if: runner.os == 'macOS'
       run: |
+        brew install xquartz
         brew install openal-soft
         brew install physfs
         brew install sdl2
