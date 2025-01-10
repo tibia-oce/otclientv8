@@ -1,4 +1,5 @@
 # OTClientV8
+[![Workflow](https://github.com/tibia-oce/migrate/actions/workflows/build-release.yaml/badge.svg)](https://github.com/tibia-oce/migrate/actions/workflows/build-release.yaml)
 
 > \[!NOTE]
 >
@@ -12,8 +13,6 @@ OTClientV8 is highly optimized, cross-platform tile based 2d game engine built w
 | Platform       | Build        |
 | :------------- | :----------: |
 | Windows        | [![Build & Release](https://github.com/tibia-oce/otclientv8/actions/workflows/build-release.yaml/badge.svg)](https://github.com/tibia-oce/otclientv8/actions/workflows/build-release.yaml) |
-
-[![Workflow](https://github.com/tibia-oce/migrate/actions/workflows/build-release.yaml/badge.svg)](https://github.com/tibia-oce/migrate/actions/workflows/build-release.yaml)
 
 
 ## Getting started
