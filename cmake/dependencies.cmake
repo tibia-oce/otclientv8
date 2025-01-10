@@ -60,46 +60,6 @@ if(FRAMEWORK_SOUND)
 endif()
 
 # Platform specific libraries
-if(APPLE)
-    if(NOT EXISTS "/usr/X11R6/include" OR NOT EXISTS "/usr/X11R6/lib")
-        message(WARNING "X11 libraries not found in expected location")
-    endif()
-endif()
-
-if(APPLE)
-    # Explicitly add X11 include and library paths
-    include_directories(/opt/X11/include/)
-    link_directories(/opt/X11/lib/)
-    
-    # Ensure OpenGL is linked
-    find_package(OpenGL REQUIRED)
-    
-    # Set OpenGL libraries with more robust path handling
-    find_library(OPENGL_LIBRARY OpenGL)
-    find_library(X11_LIBRARY X11)
-    
-    set(OPENGL_LIBRARIES 
-        ${OPENGL_LIBRARY}
-        ${X11_LIBRARY}
-        /System/Library/Frameworks/OpenGL.framework
-    )
-
-    # Additional X11 libraries that might be needed
-    find_library(XEXT_LIBRARY Xext)
-    if(XEXT_LIBRARY)
-        list(APPEND OPENGL_LIBRARIES ${XEXT_LIBRARY})
-    endif()
-
-else()
-    if(USE_STATIC_LIBS)
-        set(CMAKE_FIND_LIBRARY_SUFFIXES ".so")
-        find_package(OpenGL REQUIRED)
-        set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-    else()
-        find_package(OpenGL REQUIRED)            
-    endif()
-endif()
-
 if(WIN32)
     list(APPEND framework_LIBRARIES bcrypt dbghelp shlwapi iphlpapi psapi)
 elseif(UNIX AND NOT APPLE)
