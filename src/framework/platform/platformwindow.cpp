@@ -27,6 +27,9 @@
 WIN32Window window;
 #elif defined(ANDROID)
 #include "androidwindow.h"
+#elif defined(__APPLE__)
+#include "sdlwindow.h"
+SDLWindow window;
 #elif defined(__EMSCRIPTEN__)
 #include "sdlwindow.h"
 SDLWindow window;
