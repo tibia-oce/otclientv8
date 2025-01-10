@@ -27,6 +27,8 @@ on:
 env:
   CMAKE_BUILD_PARALLEL_LEVEL: 2
   MAKEFLAGS: '-j 2'
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
+  VCPKG_BINARY_SOURCES: 'clear;default,readwrite'
 
 jobs:
   build:
@@ -45,7 +47,33 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@main
 
-    - name: Setup anew (or from cache) vcpkg (and does not build any package)
+    - name: Cache vcpkg packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ${{ github.workspace }}/vcpkg
+          !${{ github.workspace }}/vcpkg/buildtrees
+          !${{ github.workspace }}/vcpkg/packages
+          !${{ github.workspace }}/vcpkg/downloads
+        key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+        restore-keys: |
+          vcpkg-${{ runner.os }}-
+
+    - name: Cache build outputs
+      uses: actions/cache@v3
+      with:
+        path: |
+          ${{ github.workspace }}/build/${{ matrix.buildtype }}
+          !${{ github.workspace }}/build/${{ matrix.buildtype }}/CMakeCache.txt
+          !${{ github.workspace }}/build/${{ matrix.buildtype }}/CMakeFiles
+        key: build-${{ runner.os }}-${{ matrix.buildtype }}-${{ hashFiles('src/**/*.cpp', 'src/**/*.h') }}
+        restore-keys: |
+          build-${{ runner.os }}-${{ matrix.buildtype }}-
+
+    - name: Create vcpkg binary cache directory
+      run: mkdir -p ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+
+    - name: Setup vcpkg
       uses: lukka/run-vcpkg@v11
       with:
         vcpkgDirectory: '${{ github.workspace }}/vcpkg'
