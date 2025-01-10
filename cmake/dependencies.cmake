@@ -71,6 +71,16 @@ if(APPLE)
     find_package(SDL2 REQUIRED)
     list(APPEND framework_LIBRARIES ${SDL2_LIBRARIES})
     list(APPEND framework_INCLUDE_DIRS ${SDL2_INCLUDE_DIRS})
+elseif(UNIX AND NOT APPLE)
+    find_package(X11 REQUIRED)
+    list(APPEND framework_LIBRARIES ${X11_LIBRARIES})
+    list(APPEND framework_INCLUDE_DIRS ${X11_INCLUDE_DIR})
+
+    if(FRAMEWORK_GRAPHICS)
+        find_package(GLU REQUIRED)
+        list(APPEND framework_LIBRARIES ${GLU_LIBRARY})
+        list(APPEND framework_INCLUDE_DIRS ${GLU_INCLUDE_DIR})
+    endif()
 endif()
 
 # Framework includes
