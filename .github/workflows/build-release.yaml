@@ -124,28 +124,69 @@ jobs:
         path: |
           ${{ github.workspace }}/build/${{ matrix.buildtype }}/${{ matrix.artifact-name }}
 
-    - name: Create Temporary Directory
+    - name: Create Client Package (Windows)
+      if: runner.os == 'Windows'
       run: |
         $tempDir = "$env:GITHUB_WORKSPACE/client"
         New-Item -Path $tempDir -ItemType Directory -Force
-
-    - name: Move Files to Temporary Directory 
-      run: |
         Copy-Item -Path "$env:GITHUB_WORKSPACE/data" -Destination "$env:GITHUB_WORKSPACE/client/data" -Recurse -Force
         Copy-Item -Path "$env:GITHUB_WORKSPACE/mods" -Destination "$env:GITHUB_WORKSPACE/client/mods" -Recurse -Force  
         Copy-Item -Path "$env:GITHUB_WORKSPACE/modules" -Destination "$env:GITHUB_WORKSPACE/client/modules" -Recurse -Force
         Copy-Item -Path "$env:GITHUB_WORKSPACE/init.lua" -Destination "$env:GITHUB_WORKSPACE/client/init.lua" -Force
         Copy-Item -Path "$env:GITHUB_WORKSPACE/build/${{ matrix.buildtype }}/otclient.exe" -Destination "$env:GITHUB_WORKSPACE/client/otclient.exe" -Force
 
-    - name: Compress Temporary Directory
-      run: |
+        # Copy required DLLs from vcpkg
+        $vcpkgBinPath = "$env:GITHUB_WORKSPACE/build/${{ matrix.buildtype }}/vcpkg_installed/x64-windows/bin"
+        if (Test-Path $vcpkgBinPath) {
+            Get-ChildItem -Path $vcpkgBinPath -Filter "*.dll" | ForEach-Object {
+                Copy-Item $_.FullName -Destination "$env:GITHUB_WORKSPACE/client/" -Force
+            }
+        }
+
+        # Copy system DLLs if needed - mainly for VCRUNTIME
+        $systemDlls = @(
+            "msvcp140.dll",
+            "vcruntime140.dll",
+            "vcruntime140_1.dll"
+        )
+        foreach ($dll in $systemDlls) {
+            $systemPath = "C:\Windows\System32\$dll"
+            if (Test-Path $systemPath) {
+                Copy-Item $systemPath -Destination "$env:GITHUB_WORKSPACE/client/" -Force
+            }
+        }
         Compress-Archive -Path "$env:GITHUB_WORKSPACE/client" -DestinationPath "$env:GITHUB_WORKSPACE/client.zip"
 
-    - name: Upload client artifact
+    - name: Create Client Package (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        mkdir -p client
+        cp -r data client/
+        cp -r mods client/
+        cp -r modules client/
+        cp init.lua client/
+        cp build/${{ matrix.buildtype }}/otclient client/
+        chmod +x client/otclient
+        tar -czf client.tar.gz client/
+
+    - name: Create Client Package (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        mkdir -p client
+        cp -R data client/
+        cp -R mods client/
+        cp -R modules client/
+        cp init.lua client/
+        cp build/${{ matrix.buildtype }}/otclient client/
+        chmod +x client/otclient
+        zip -r client.zip client
+
+    - name: Upload Client Package
       uses: actions/upload-artifact@v4
       with:
-        name: client-zip-${{ matrix.buildtype }}
-        path: client.zip
+        name: client-${{ matrix.os }}-${{ matrix.buildtype }}
+        path: |
+          ${{ runner.os == 'Windows' && 'client.zip' || runner.os == 'Linux' && 'client.tar.gz' || 'client.zip' }}
 
   release:
     runs-on: ubuntu-latest
