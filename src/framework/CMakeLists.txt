@@ -1,5 +1,3 @@
-# src/framework/CMakeLists.txt
-
 # Define framework sources
 set(framework_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/const.h

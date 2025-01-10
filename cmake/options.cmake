@@ -1,5 +1,3 @@
-# cmake/options.cmake
-
 # Build options
 if(CMAKE_BASE_NAME STREQUAL "em++")
     set(WASM ON)

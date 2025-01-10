@@ -1,5 +1,3 @@
-# src/client/CMakeLists.txt
-
 add_definitions(-DCLIENT)
 
 set(client_SOURCES ${client_SOURCES}

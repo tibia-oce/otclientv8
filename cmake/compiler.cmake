@@ -1,5 +1,3 @@
-# cmake/compiler.cmake
-
 set(CMAKE_CXX_STANDARD 17)
 
 # Warning flags
