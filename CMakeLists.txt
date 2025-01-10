@@ -21,12 +21,17 @@ set(executable_SOURCES
 
 # Windows icon handling
 if(WIN32)
-    add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/otcicon.o
-                       COMMAND ${CMAKE_RC_COMPILER}
-                       -I${CMAKE_CURRENT_SOURCE_DIR}/src
-                       -i${CMAKE_CURRENT_SOURCE_DIR}/src/otcicon.rc
-                       -o ${CMAKE_CURRENT_BINARY_DIR}/otcicon.o)
-    list(APPEND executable_SOURCES otcicon.o)
+    set(RC_FILE "${CMAKE_CURRENT_SOURCE_DIR}/src/otcicon.rc")
+    set(RC_OUT "${CMAKE_CURRENT_BINARY_DIR}/otcicon.res")
+    add_custom_command(
+        OUTPUT ${RC_OUT}
+        COMMAND rc.exe
+        ARGS /fo "${RC_OUT}" "${RC_FILE}"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src
+        DEPENDS ${RC_FILE}
+        COMMENT "Compiling Windows resources"
+    )
+    list(APPEND executable_SOURCES ${RC_OUT})
 endif()
 
 # Version definition if provided

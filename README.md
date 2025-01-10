@@ -6,13 +6,13 @@
 
 #### Docker (Via Ubuntu 22.04)
 
-```
+```sh
 make compile
 ```
 
 #### Ubuntu 22.04
 
-```
+```sh
 sudo apt update
 sudo apt install git curl build-essential cmake gcc g++ pkg-config autoconf libtool libglew-dev -y
 cd ~
@@ -29,13 +29,13 @@ cp otclient ../otclient && cd ..
 
 #### Visual Studio 2022
 
-Install vcpkg
+Install vcpkg:
 
-```
+```sh
 git clone https://github.com/microsoft/vcpkg.git
 cd vcpkg
-./bootstrap-vcpkg.bat
-./vcpkg.exe integrate install
+.\bootstrap-vcpkg.bat
+.\vcpkg.exe integrate install
 ```
 
 Use Visual Studio 2022, select backend (OpenGL, DirectX), platform (x86, x64) and just build, all required libraries will be installed for you.
