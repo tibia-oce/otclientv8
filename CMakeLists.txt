@@ -5,6 +5,7 @@ project(otclient)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
 # Include core configuration files
+include(cmake/toolchain.cmake)
 include(cmake/options.cmake)
 include(cmake/compiler.cmake)
 include(cmake/dependencies.cmake)
