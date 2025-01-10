@@ -65,22 +65,12 @@ if(WIN32)
 elseif(UNIX AND NOT APPLE)
     list(APPEND framework_LIBRARIES dl rt)
 endif()
-if(UNIX AND NOT APPLE AND NOT WASM)
-    find_package(X11 REQUIRED)
-    list(APPEND framework_LIBRARIES ${X11_LIBRARIES})
-    list(APPEND framework_INCLUDE_DIRS ${X11_INCLUDE_DIR})
-endif()
 
 # Platform specific window dependencies
 if(APPLE)
     find_package(SDL2 REQUIRED)
     list(APPEND framework_LIBRARIES ${SDL2_LIBRARIES})
     list(APPEND framework_INCLUDE_DIRS ${SDL2_INCLUDE_DIRS})
-elseif(UNIX AND NOT APPLE AND NOT WASM)
-    find_package(X11 REQUIRED)
-    find_package(GLU REQUIRED)  # Add this for OpenGL utilities
-    list(APPEND framework_LIBRARIES ${X11_LIBRARIES} ${GLU_LIBRARY})
-    list(APPEND framework_INCLUDE_DIRS ${X11_INCLUDE_DIR} ${GLU_INCLUDE_DIR})
 endif()
 
 # Framework includes
