@@ -128,7 +128,6 @@ jobs:
   release:
     runs-on: ubuntu-latest
     needs: build
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -143,7 +142,11 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: client-zip # this needs to include the matrix build type
+          path: artifacts
+          pattern: client-zip-*
+
+      - name: List downloaded artifacts
+        run: ls -R artifacts/
 
       # https://github.com/semantic-release/semantic-release/issues/1592#issuecomment-902533435
       # Semantic-release doesn't support pathing to a config file unless using a .js config:
@@ -183,7 +186,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEBUG: semantic-release:*
-        run: npx semantic-release --ci
+        run: |
+          npx semantic-release --ci
+          RELEASE_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
+          for artifact in artifacts/client-zip-*/client.zip; do
+            build_type=$(echo $artifact | cut -d/ -f2)
+            gh release upload "$RELEASE_TAG" "$artifact" --clobber \
+              --name "client-${build_type}-${RELEASE_TAG}.zip"
+          done
 
       # https://semantic-release.gitbook.io/semantic-release/usage/workflow-configuration#pre-release-branches
       # Semantic-release appends a numerical suffix to all pre-releases by default (e.g., `v0.0.1-rc.1`).
