@@ -100,7 +100,6 @@ else()
     endif()
 endif()
 
-
 if(WIN32)
     list(APPEND framework_LIBRARIES bcrypt dbghelp shlwapi iphlpapi psapi)
 elseif(UNIX AND NOT APPLE)
