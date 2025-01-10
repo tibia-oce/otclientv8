@@ -6,18 +6,16 @@
 
 OTClientV8 is highly optimized, cross-platform tile based 2d game engine built with c++17, lua, physfs, OpenGL ES 2.0 and OpenAL. It has been created as alternative client for game called Tibia. This client is designed specifically to work with the [Mythbound server](https://github.com/tibia-oce/server).
 
-![rme](/docs/images/rme.png)
-
-Supported platforms:
-    - Mac Os (w/ https://www.xquartz.org/)
-    - Windows (min. Windows 7)
-    - Linux
-
-
+![client](/docs/images/client.png)
 
 ## Getting started
 
 Download the latest release [here](https://github.com/tibia-oce/otclientv8/releases/latest).  After compiling you need to provide the client a copy of the [https://github.com/tibia-oce/assets/tree/master/things/1098](assets) in `./data/things`
+
+Supported platforms:
+- Mac Os (w/ https://www.xquartz.org/)
+- Windows (min. Windows 7)
+- Linux
 
 ## Compilation
 
