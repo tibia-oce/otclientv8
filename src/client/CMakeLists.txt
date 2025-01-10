@@ -1,3 +1,5 @@
+# src/client/CMakeLists.txt
+
 add_definitions(-DCLIENT)
 
 set(client_SOURCES ${client_SOURCES}
@@ -99,3 +101,7 @@ set(client_SOURCES ${client_SOURCES}
     # util
     ${CMAKE_CURRENT_LIST_DIR}/position.h
 )
+
+add_library(client STATIC ${client_SOURCES})
+target_include_directories(client PUBLIC ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(client PRIVATE framework)
