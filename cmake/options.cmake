@@ -25,6 +25,9 @@ if(APPLE)
     set(USE_STATIC_LIBS ON CACHE BOOL "Use static libraries" FORCE)
     set(USE_LIBCPP ON CACHE BOOL "Use libc++" FORCE)
     set(USE_SDL2 ON CACHE BOOL "Use SDL2" FORCE)
+    add_compile_options(
+        -Winconsistent-missing-override
+    )
 else()
     option(CRASH_HANDLER "Generate crash reports" ON)
     option(USE_STATIC_LIBS "Use static libraries" ON)
