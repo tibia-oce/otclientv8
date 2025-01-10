@@ -1,13 +1,13 @@
 # OTClientV8
 [![Workflow](https://github.com/tibia-oce/migrate/actions/workflows/build-release.yaml/badge.svg)](https://github.com/tibia-oce/migrate/actions/workflows/build-release.yaml)
 
-OTClientV8 is highly optimized, cross-platform tile based 2d game engine built with c++17, lua, physfs, OpenGL ES 2.0 and OpenAL. It has been created as alternative client for OpenTibia. This client is designed specifically to work with the [Mythbound server](https://github.com/tibia-oce/server).
-
-![client](/docs/images/client.png)
-
 > \[!NOTE]
 >
 >Based on [edubart/otclient](https://github.com/edubart/otclient).
+
+OTClientV8 is highly optimized, cross-platform tile based 2d game engine built with c++17, lua, physfs, OpenGL ES 2.0 and OpenAL. It has been created as alternative client for OpenTibia. This client is designed specifically to work with the [Mythbound server](https://github.com/tibia-oce/server).
+
+![client](/docs/images/client.png)
 
 ## Builds
 | Platform       | Build        |
