@@ -4,7 +4,7 @@
     {
       "name": "windows-base",
       "hidden": true,
-      "generator": "Ninja",  
+      "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "architecture": {
         "value": "x64",
@@ -33,13 +33,27 @@
       }
     },
     {
-      "name": "windows-debug",
+      "name": "windows-debug", 
       "displayName": "Windows Debug",
       "description": "Windows debug build using Ninja generator and vcpkg",
-      "inherits": "windows-base", 
+      "inherits": "windows-base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-release",
+      "configurePreset": "windows-release",
+      "displayName": "Build windows-release",
+      "description": "Build windows release configuration"
+    },
+    {
+      "name": "windows-debug",
+      "configurePreset": "windows-debug",
+      "displayName": "Build windows-debug", 
+      "description": "Build windows debug configuration"
     }
   ]
 }
