@@ -37,7 +37,7 @@ OTClientV8 is highly optimized, cross-platform tile based 2d game engine built w
 Download the latest release [here](https://github.com/tibia-oce/otclientv8/releases/latest).  After compiling you need to provide the client a copy of the [assets](https://github.com/tibia-oce/assets/tree/master/things/1098) in `./data/things`.
 
 | Platform       | Build        | Notes        |
-| :------------- | :----------: |
+| :------------- | :----------: | :----------: |
 | Windows        | [![Build & Release](https://github.com/tibia-oce/otclientv8/actions/workflows/build-release.yaml/badge.svg)](https://github.com/tibia-oce/otclientv8/actions/workflows/build-release.yaml) | Requires Windows 7+ |
 | Linux        | [![Build & Release](https://github.com/tibia-oce/otclientv8/actions/workflows/build-release.yaml/badge.svg)](https://github.com/tibia-oce/otclientv8/actions/workflows/build-release.yaml) | |
 | MacOS        | [![Build & Release](https://github.com/tibia-oce/otclientv8/actions/workflows/build-release.yaml/badge.svg)](https://github.com/tibia-oce/otclientv8/actions/workflows/build-release.yaml) | Requires [xquartz](https://www.xquartz.org/) |
