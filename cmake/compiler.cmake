@@ -1,41 +1,30 @@
 set(CMAKE_CXX_STANDARD 17)
 
-# Warning flags based on compiler
+# Warning flags based on compiler 
 if(MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-    add_definitions(-DNOMINMAX)
+    add_definitions(-DNOMINMAX) 
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     set(WARNS_FLAGS "/W3")
 else()
     set(WARNS_FLAGS "-Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-unused-result")
 endif()
 
-# Platform definitions
-if(WIN32)
-    add_definitions(-DPLATFORM_WINDOWS)
-elseif(APPLE)
-    add_definitions(-DPLATFORM_APPLE -DUSE_SDL2)
-elseif(UNIX)
-    add_definitions(-DPLATFORM_UNIX)
-endif()
-
-# Add framework definitions first
+# Framework definitions
 if(FRAMEWORK_GRAPHICS)
     add_definitions(-DFW_GRAPHICS)
 endif()
-
 if(FRAMEWORK_SOUND)
     add_definitions(-DFW_SOUND)
 endif()
-
 if(FRAMEWORK_NET)
     add_definitions(-DFW_NET)
 endif()
-
 if(FRAMEWORK_XML)
     add_definitions(-DFW_XML)
 endif()
 
+# Platform settings
 if(WASM)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNS_FLAGS} ${ARCH_FLAGS} -s USE_ZLIB=1 -s USE_LIBPNG=1 -s USE_SDL=2 -s USE_BOOST_HEADERS=1 -s USE_PTHREADS=1 -O1")
 else()
