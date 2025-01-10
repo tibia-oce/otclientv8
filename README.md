@@ -7,7 +7,28 @@
 
 OTClientV8 is highly optimized, cross-platform tile based 2d game engine built with c++17, lua, physfs, OpenGL ES 2.0 and OpenAL. It has been created as alternative client for OpenTibia. This client is designed specifically to work with the [Mythbound server](https://github.com/tibia-oce/server).
 
-![client](/docs/images/client.png)
+<div align="center">
+  <div style="text-align: center;">
+    <table>
+      <tr>
+        <td>
+          <img src="https://github.com/tibia-oce/otclientv8/blob/main/docs/images/client.png?raw=true?raw=true" width="200" alt="Login Screen" style="max-width:200px;">
+        </td>
+        <td>
+          <img src="https://github.com/kokekanon/OTredemption-Picture-NODELETE/blob/main/Picture/Attached%20Effect/Creature/001_Bone.gif?raw=true" width="200" alt="Character Attachments" style="max-width:200px;">
+          </td>
+        <td>
+          <img src="https://github.com/tibia-oce/otclientv8/blob/main/docs/images/client.png?raw=true" width="200" alt="Game Interface" style="max-width:200px;">
+        </td>
+      </tr>
+      <tr>
+        <td>Login Screen</td>
+        <td>Character Cosmetics</td>
+        <td>Game Interface</td>
+      </tr>
+    </table>
+  </div>
+</div>
 
 ## Builds
 
