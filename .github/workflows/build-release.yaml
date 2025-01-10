@@ -36,16 +36,38 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-2022]
-        buildtype: [windows-release]
         include:
-        - os: windows-2022
-          triplet: x64-windows
-          packages: >
-            sccache #magic___^_^___line
+          - os: windows-2022
+            buildtype: windows-release
+            triplet: x64-windows
+            artifact-name: otclient-windows.exe
+            packages: sccache
+          - os: ubuntu-22.04
+            buildtype: linux-release
+            triplet: x64-linux
+            artifact-name: otclient
+            packages: sccache
+          - os: macos-12
+            buildtype: macos-release
+            triplet: x64-osx
+            artifact-name: otclient
+            packages: sccache
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@main
+
+    - name: Install Linux Dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgl1-mesa-dev xorg-dev libasound2-dev
+  
+    - name: Install macOS Dependencies
+      if: runner.os == 'macOS'
+      run: |
+        brew install openal-soft
+        brew install physfs
 
     - name: Cache vcpkg packages
       uses: actions/cache@v3
@@ -95,12 +117,12 @@ jobs:
         configurePreset: '${{ matrix.buildtype }}'
         buildPreset: '${{ matrix.buildtype }}'
 
-    - name: Create and Upload Artifact (exe)
+    - name: Create and Upload Artifacts
       uses: actions/upload-artifact@main
       with:
         name: otclient-${{ matrix.os }}-${{ matrix.buildtype }}-${{ github.sha }}
         path: |
-          ${{ github.workspace }}/build/${{ matrix.buildtype }}/otclient.exe
+          ${{ github.workspace }}/build/${{ matrix.buildtype }}/${{ matrix.artifact-name }}
 
     - name: Create Temporary Directory
       run: |

@@ -24,6 +24,24 @@
       }
     },
     {
+      "name": "unix-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": {
+          "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+          "type": "FILEPATH"
+        },
+        "USE_STATIC_LIBS": true
+      },
+      "condition": {
+        "type": "inList",
+        "string": "${hostSystemName}",
+        "list": ["Linux", "Darwin"]
+      }
+    },
+    {
       "name": "windows-release",
       "displayName": "Windows Release",
       "description": "Windows release build using Ninja generator and vcpkg",
@@ -33,12 +51,22 @@
       }
     },
     {
-      "name": "windows-debug", 
-      "displayName": "Windows Debug",
-      "description": "Windows debug build using Ninja generator and vcpkg",
-      "inherits": "windows-base",
+      "name": "linux-release",
+      "displayName": "Linux Release",
+      "description": "Linux release build using Ninja generator and vcpkg",
+      "inherits": "unix-base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "macos-release",
+      "displayName": "macOS Release",
+      "description": "macOS release build using Ninja generator and vcpkg",
+      "inherits": "unix-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_OSX_ARCHITECTURES": "x86_64"
       }
     }
   ],
@@ -50,10 +78,16 @@
       "description": "Build windows release configuration"
     },
     {
-      "name": "windows-debug",
-      "configurePreset": "windows-debug",
-      "displayName": "Build windows-debug", 
-      "description": "Build windows debug configuration"
+      "name": "linux-release",
+      "configurePreset": "linux-release",
+      "displayName": "Build linux-release",
+      "description": "Build linux release configuration"
+    },
+    {
+      "name": "macos-release",
+      "configurePreset": "macos-release",
+      "displayName": "Build macos-release",
+      "description": "Build macOS release configuration"
     }
   ]
 }
