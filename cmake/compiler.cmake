@@ -2,6 +2,9 @@ set(CMAKE_CXX_STANDARD 17)
 
 # Warning flags based on compiler
 if(MSVC)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+    add_definitions(-DNOMINMAX)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     set(WARNS_FLAGS "/W3")
 else()
     set(WARNS_FLAGS "-Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-unused-result")
