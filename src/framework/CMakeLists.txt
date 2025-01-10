@@ -136,21 +136,6 @@ if(FRAMEWORK_GRAPHICS)
         ${CMAKE_CURRENT_SOURCE_DIR}/platform/platformwindow.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/platform/platformwindow.h
     )
-
-    if(WIN32)
-        list(APPEND PLATFORM_WINDOW_SOURCES
-            ${CMAKE_CURRENT_SOURCE_DIR}/platform/win32window.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/platform/win32window.h)
-    elseif(APPLE)
-        list(APPEND PLATFORM_WINDOW_SOURCES
-            ${CMAKE_CURRENT_SOURCE_DIR}/platform/sdlwindow.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/platform/sdlwindow.h)
-    elseif(UNIX)
-        list(APPEND PLATFORM_WINDOW_SOURCES
-            ${CMAKE_CURRENT_SOURCE_DIR}/platform/x11window.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/platform/x11window.h)
-    endif()
-
     list(APPEND framework_SOURCES
         ${PLATFORM_WINDOW_SOURCES}
         ${CMAKE_CURRENT_SOURCE_DIR}/graphics/animatedtexture.cpp
@@ -236,6 +221,16 @@ if(FRAMEWORK_GRAPHICS)
         ${CMAKE_CURRENT_SOURCE_DIR}/ui/uiwidgetbasestyle.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/ui/uiwidgetimage.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/ui/uiwidgettext.cpp
+
+        # platform window
+        ${CMAKE_CURRENT_LIST_DIR}/platform/platformwindow.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/platform/platformwindow.h
+        ${CMAKE_CURRENT_LIST_DIR}/platform/win32window.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/platform/win32window.h
+        ${CMAKE_CURRENT_LIST_DIR}/platform/x11window.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/platform/x11window.h
+        ${CMAKE_CURRENT_LIST_DIR}/platform/sdlwindow.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/platform/sdlwindow.h
 
         # window input
         ${CMAKE_CURRENT_SOURCE_DIR}/input/mouse.cpp
