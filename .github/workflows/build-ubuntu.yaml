@@ -43,14 +43,28 @@ jobs:
             buildtype: linux-release
             triplet: x64-linux
             artifact-name: otclient
+            packages: >-
+              ccache
+              freeglut3-dev
+              libasound2-dev
+              libgl-dev
+              libgl1-mesa-dev
+              libglu1-mesa-dev
+              libglew-dev
+              libx11-dev
+              libxi-dev
+              libxmu-dev
+              mesa-common-dev
+              xorg-dev
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@main
-
-    - name: Install Linux Dependencies
-      run: >
-        sudo apt-get update && sudo apt-get install -y ccache libgl1-mesa-dev xorg-dev libasound2-dev libglu1-mesa-dev freeglut3-dev mesa-common-dev libglew-dev libx11-dev linux-headers-$(uname -r)
+    - name: Install OS Dependencies
+      if: matrix.packages != ''
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ${{ matrix.packages }}
 
     - name: Switch to gcc-12
       run: |
@@ -80,10 +94,18 @@ jobs:
         configurePreset: ${{ matrix.buildtype }}
         buildPreset: ${{ matrix.buildtype }}
 
+    - name: Debug - List Directory Contents
+      run: |
+        echo "Contents of ${{ github.workspace }}:"
+        ls -la ${{ github.workspace }}
+        echo "Contents of ${{ github.workspace }}/build/${{ matrix.buildtype }}:"
+        ls -la ${{ github.workspace }}/build/${{ matrix.buildtype }}
+        
     - name: Create and Upload Artifact
       if: ${{ github.event_name != 'pull_request' }}
       uses: actions/upload-artifact@main
       with:
         name: otclient-${{ matrix.os }}-${{ matrix.buildtype }}-${{ github.sha }}
         path: |
-          ${{ github.workspace }}/otclient
+          ${{ github.workspace }}/build/${{ matrix.buildtype }}/${{ matrix.artifact-name }}
+  

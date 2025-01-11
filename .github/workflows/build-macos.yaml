@@ -52,11 +52,10 @@ jobs:
     - name: Install macOS Dependencies
       run: |
         brew install xquartz
-        brew install libx11
-        brew install libxext
         brew install openal-soft
         brew install physfs
         brew install sdl2
+
     - name: Restore artifacts and install vcpkg
       id: vcpkg-step
       run: |
@@ -79,10 +78,17 @@ jobs:
         configurePreset: ${{ matrix.buildtype }}
         buildPreset: ${{ matrix.buildtype }}
 
+    - name: Debug - List Directory Contents
+      run: |
+        echo "Contents of ${{ github.workspace }}:"
+        ls -la ${{ github.workspace }}
+        echo "Contents of ${{ github.workspace }}/build/${{ matrix.buildtype }}:"
+        ls -la ${{ github.workspace }}/build/${{ matrix.buildtype }}
+        
     - name: Create and Upload Artifact
       if: ${{ github.event_name != 'pull_request' }}
       uses: actions/upload-artifact@main
       with:
         name: otclient-${{ matrix.os }}-${{ matrix.buildtype }}-${{ github.sha }}
         path: |
-          ${{ github.workspace }}/otclient
+          ${{ github.workspace }}/build/${{ matrix.buildtype }}/${{ matrix.artifact-name }}
