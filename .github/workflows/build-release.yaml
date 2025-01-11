@@ -8,7 +8,7 @@ on:
       - develop
     paths:
       - "data/**"
-      - "mods/**"
+      - "mods/**" 
       - "modules/**"
       - "layouts/**"
       - ".github/**"
@@ -27,6 +27,8 @@ on:
 env:
   CMAKE_BUILD_PARALLEL_LEVEL: 2
   MAKEFLAGS: '-j 2'
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
+  VCPKG_BINARY_SOURCES: 'clear;default,readwrite'
 
 jobs:
   build:
@@ -34,83 +36,177 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-2022]
-        buildtype: [windows-release]
         include:
-        - os: windows-2022
-          triplet: x64-windows
-          packages: >
-            sccache #magic___^_^___line
+          - os: windows-2022
+            buildtype: windows-release
+            triplet: x64-windows
+            artifact-name: otclient-windows.exe
+            packages: sccache
+          - os: ubuntu-22.04
+            buildtype: linux-release
+            triplet: x64-linux
+            artifact-name: otclient
+            packages: sccache
+          - os: macOS-14
+            buildtype: macos-release
+            triplet: x64-osx
+            artifact-name: otclient
+            packages: sccache
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@main
 
-    - name: CCache
-      uses: hendrikmuhs/ccache-action@main
-      with:
-        max-size: "1G"
-        variant: "sccache"
-        key: ccache-${{ matrix.os }}-${{ matrix.buildtype }}
-        restore-keys: |
-          ccache-${{ matrix.os }}
+    - name: Install Linux Dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgl1-mesa-dev xorg-dev libasound2-dev libglu1-mesa-dev freeglut3-dev mesa-common-dev
+        # libx11-dev libxcb1-dev libx11-xcb-dev
 
-    - name: Restore artifacts and install vcpkg
-      id: vcpkg-step
+    - name: Install macOS Dependencies
+      if: runner.os == 'macOS'
+      run: |
+        brew install xquartz
+        brew install libx11
+        brew install libxext
+        brew install openal-soft
+        brew install physfs
+        brew install sdl2
+
+    - name: Cache vcpkg packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ${{ github.workspace }}/vcpkg
+          !${{ github.workspace }}/vcpkg/buildtrees
+          !${{ github.workspace }}/vcpkg/packages
+          !${{ github.workspace }}/vcpkg/downloads
+        key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+        restore-keys: |
+          vcpkg-${{ runner.os }}-
+
+    - name: Cache build outputs
+      uses: actions/cache@v3
+      with:
+        path: |
+          ${{ github.workspace }}/build/${{ matrix.buildtype }}
+          !${{ github.workspace }}/build/${{ matrix.buildtype }}/CMakeCache.txt
+          !${{ github.workspace }}/build/${{ matrix.buildtype }}/CMakeFiles
+        key: build-${{ runner.os }}-${{ matrix.buildtype }}-${{ hashFiles('src/**/*.cpp', 'src/**/*.h') }}
+        restore-keys: |
+          build-${{ runner.os }}-${{ matrix.buildtype }}-
+
+    - name: Create vcpkg binary cache directory
+      run: mkdir -p ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+
+    - name: Restore artifacts and install vcpkg (Windows)
+      if: runner.os == 'Windows'
+      id: vcpkg-step-windows
+      shell: pwsh
       run: |
         $json=Get-Content vcpkg.json -Raw | ConvertFrom-Json
         $vcpkgCommitId=$json.'builtin-baseline'
         Write-Host "vcpkg commit ID: $vcpkgCommitId"
-        echo "vcpkgGitCommitId=$vcpkgCommitId" >> "$GITHUB_OUTPUT"
+        echo "vcpkgGitCommitId=$vcpkgCommitId" >> "$env:GITHUB_OUTPUT"
 
-    - name: Get vcpkg commit id from vcpkg.json
-      uses: lukka/run-vcpkg@main
-      with:
-        vcpkgGitURL: "https://github.com/microsoft/vcpkg.git"
-        vcpkgGitCommitId: ${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}
+    - name: Restore artifacts and install vcpkg (Unix)
+      if: runner.os != 'Windows'
+      id: vcpkg-step-unix
+      shell: bash
+      run: |
+        vcpkgCommitId=$(cat vcpkg.json | grep -o '"builtin-baseline": *"[^"]*"' | cut -d'"' -f4)
+        echo "vcpkg commit ID: $vcpkgCommitId"
+        echo "vcpkgGitCommitId=$vcpkgCommitId" >> $GITHUB_OUTPUT
 
     - name: Get latest CMake and ninja
-      uses: lukka/get-cmake@main
+      uses: lukka/get-cmake@latest
 
     - name: Run CMake
-      uses: lukka/run-cmake@main
+      uses: lukka/run-cmake@v10
       with:
-        configurePreset: ${{ matrix.buildtype }}
-        buildPreset: ${{ matrix.buildtype }}
+        configurePreset: '${{ matrix.buildtype }}'
+        buildPreset: '${{ matrix.buildtype }}'
 
-    - name: Create and Upload Artifact (exe)
+    - name: Create and Upload Artifacts
       uses: actions/upload-artifact@main
       with:
         name: otclient-${{ matrix.os }}-${{ matrix.buildtype }}-${{ github.sha }}
         path: |
-          ${{ github.workspace }}/otclient.exe
+          ${{ github.workspace }}/build/${{ matrix.buildtype }}/${{ matrix.artifact-name }}
 
-    - name: Create Temporary Directory
+    - name: Create Client Package (Windows)
+      if: runner.os == 'Windows'
       run: |
         $tempDir = "$env:GITHUB_WORKSPACE/client"
         New-Item -Path $tempDir -ItemType Directory -Force
-
-    - name: Move Files to Temporary Directory
-      run: |
         Copy-Item -Path "$env:GITHUB_WORKSPACE/data" -Destination "$env:GITHUB_WORKSPACE/client/data" -Recurse -Force
-        Copy-Item -Path "$env:GITHUB_WORKSPACE/mods" -Destination "$env:GITHUB_WORKSPACE/client/mods" -Recurse -Force
+        Copy-Item -Path "$env:GITHUB_WORKSPACE/mods" -Destination "$env:GITHUB_WORKSPACE/client/mods" -Recurse -Force  
         Copy-Item -Path "$env:GITHUB_WORKSPACE/modules" -Destination "$env:GITHUB_WORKSPACE/client/modules" -Recurse -Force
         Copy-Item -Path "$env:GITHUB_WORKSPACE/init.lua" -Destination "$env:GITHUB_WORKSPACE/client/init.lua" -Force
-        Copy-Item -Path "$env:GITHUB_WORKSPACE/otclient.exe" -Destination "$env:GITHUB_WORKSPACE/client/otclient.exe" -Force
+        Copy-Item -Path "$env:GITHUB_WORKSPACE/build/${{ matrix.buildtype }}/otclient.exe" -Destination "$env:GITHUB_WORKSPACE/client/otclient.exe" -Force
 
-    - name: Compress Temporary Directory
-      run: |
+        # Copy required DLLs from vcpkg
+        $vcpkgBinPath = "$env:GITHUB_WORKSPACE/build/${{ matrix.buildtype }}/vcpkg_installed/x64-windows/bin"
+        if (Test-Path $vcpkgBinPath) {
+            Get-ChildItem -Path $vcpkgBinPath -Filter "*.dll" | ForEach-Object {
+                Copy-Item $_.FullName -Destination "$env:GITHUB_WORKSPACE/client/" -Force
+            }
+        }
+
+        # Copy system DLLs if needed - mainly for VCRUNTIME
+        $systemDlls = @(
+            "msvcp140.dll",
+            "vcruntime140.dll",
+            "vcruntime140_1.dll"
+        )
+        foreach ($dll in $systemDlls) {
+            $systemPath = "C:\Windows\System32\$dll"
+            if (Test-Path $systemPath) {
+                Copy-Item $systemPath -Destination "$env:GITHUB_WORKSPACE/client/" -Force
+            }
+        }
         Compress-Archive -Path "$env:GITHUB_WORKSPACE/client" -DestinationPath "$env:GITHUB_WORKSPACE/client.zip"
 
-    - name: Upload client artifact
+    - name: Create Client Package (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        mkdir -p client
+        cp -r data client/
+        cp -r mods client/
+        cp -r modules client/
+        cp init.lua client/
+        cp build/${{ matrix.buildtype }}/otclient client/
+        chmod +x client/otclient
+        tar -czf client.tar.gz client/
+
+    - name: Create Client Package (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        mkdir -p client
+        cp -R data client/
+        cp -R mods client/
+        cp -R modules client/
+        cp init.lua client/
+        cp build/${{ matrix.buildtype }}/otclient client/
+        chmod +x client/otclient
+        zip -r client.zip client
+
+    - name: Upload Client Package
       uses: actions/upload-artifact@v4
       with:
-        name: client-zip
-        path: client.zip
+        name: client-${{ matrix.os }}-${{ matrix.buildtype }}
+        path: |
+          ${{ runner.os == 'Windows' && 'client.zip' || runner.os == 'Linux' && 'client.tar.gz' || 'client.zip' }}
 
   release:
     runs-on: ubuntu-latest
     needs: build
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -125,7 +221,11 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: client-zip
+          path: artifacts
+          pattern: 'client-*'
+
+      - name: List downloaded artifacts
+        run: ls -R artifacts/
 
       # https://github.com/semantic-release/semantic-release/issues/1592#issuecomment-902533435
       # Semantic-release doesn't support pathing to a config file unless using a .js config:
@@ -165,7 +265,27 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEBUG: semantic-release:*
-        run: npx semantic-release --ci
+        run: |
+          npx semantic-release --ci
+          RELEASE_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
+          
+          # Windows artifact
+          if [ -f "artifacts/client-windows-2022-windows-release/client.zip" ]; then
+            gh release upload "$RELEASE_TAG" "artifacts/client-windows-2022-windows-release/client.zip" --clobber \
+              --name "otclient-windows-${RELEASE_TAG}.zip"
+          fi
+          
+          # Linux artifact
+          if [ -f "artifacts/client-ubuntu-22.04-linux-release/client.tar.gz" ]; then
+            gh release upload "$RELEASE_TAG" "artifacts/client-ubuntu-22.04-linux-release/client.tar.gz" --clobber \
+              --name "otclient-linux-${RELEASE_TAG}.tar.gz"
+          fi
+          
+          # macOS artifact
+          if [ -f "artifacts/client-macOS-14-macos-release/client.zip" ]; then
+            gh release upload "$RELEASE_TAG" "artifacts/client-macOS-14-macos-release/client.zip" --clobber \
+              --name "otclient-macos-${RELEASE_TAG}.zip"
+          fi
 
       # https://semantic-release.gitbook.io/semantic-release/usage/workflow-configuration#pre-release-branches
       # Semantic-release appends a numerical suffix to all pre-releases by default (e.g., `v0.0.1-rc.1`).
@@ -187,143 +307,3 @@ jobs:
             git push origin $new_tag  # Push the new tag to the remote
             git push origin :refs/tags/$latest_tag  # Delete the old tag on the remote
           fi
-
-# jobs:
-#   Windows:
-#     name: Build windows version
-#     runs-on: windows-2022
-#     timeout-minutes: 90
-#     steps:
-#     - name: Checkout
-#       uses: actions/checkout@v2
-#       with:
-#           submodules: recursive
-
-#     - name: Setup MSBuild and add to PATH
-#       uses: microsoft/setup-msbuild@v1.0.2
-#       id: setup_msbuild
-
-#     - name: Run vcpkg
-#       uses: lukka/run-vcpkg@v7
-#       with:
-#         vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
-#         vcpkgTriplet: x86-windows-static
-#         vcpkgGitCommitId: 3b3bd424827a1f7f4813216f6b32b6c61e386b2e
-#         vcpkgArguments: >
-#           boost-iostreams boost-asio boost-beast boost-system boost-variant boost-lockfree boost-process boost-program-options boost-uuid boost-filesystem
-#           luajit glew physfs openal-soft libogg libvorbis zlib libzip bzip2 openssl liblzma
-
-#     - name: Integrate vcpkg
-#       run: |
-#         ${{ runner.workspace }}\vcpkg\vcpkg integrate install
-        
-#     - name: Compile 
-#       timeout-minutes: 60
-#       run: |
-#         cd vc16
-#         MSBuild /property:Configuration=DirectX /p:BUILD_REVISION=${{github.run_number}}
-#         MSBuild /property:Configuration=OpenGL /p:BUILD_REVISION=${{github.run_number}}
-
-#     - name: Upload binaries
-#       uses: 'actions/upload-artifact@v2'
-#       with:
-#         name: Binaries
-#         path: |
-#           otclient_gl.exe
-#           otclient_dx.exe
-#           lib.7z
-#         if-no-files-found: error
-
-#   Mac:
-#     name: Build mac os version
-#     runs-on: 	macos-11
-#     timeout-minutes: 60
-#     steps:
-#     - name: Checkout
-#       uses: actions/checkout@v2
-#       with:
-#           submodules: recursive
-
-#     - name: Get latest CMake
-#       uses: lukka/get-cmake@latest
-
-#     - name: MacOS - install physfs pkgconfig luajit xquartz
-#       run: brew install physfs pkgconfig luajit xquartz
-
-#     - name: Run vcpkg
-#       uses: lukka/run-vcpkg@v7
-#       with:
-#         vcpkgArguments: >
-#           boost-iostreams boost-asio boost-system boost-variant boost-lockfree boost-beast glew 
-#           boost-filesystem boost-uuid libogg libvorbis zlib opengl libzip openal-soft bzip2
-#           boost-process openssl
-#         vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
-#         vcpkgTriplet: x64-osx
-#         vcpkgGitCommitId: 761c81d43335a5d5ccc2ec8ad90bd7e2cbba734e
-
-#     - name: Build with CMake
-#       uses: lukka/run-cmake@v3
-#       with:
-#         buildDirectory: ${{ runner.workspace }}/build
-#         cmakeAppendedArgs: '-G Ninja -DCMAKE_BUILD_TYPE="Release" -DVERSION=${{github.run_number}} -DCMAKE_CXX_FLAGS="-Wno-c++11-narrowing"'
-#         cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
-#         useVcpkgToolchainFile: true
-
-#     - name: Change name
-#       run: |
-#         mv '${{ runner.workspace }}/build/otclient' '${{ runner.workspace }}/build/otclient_mac'
-
-#     - name: Upload otclient
-#       uses: actions/upload-artifact@v2
-#       with:
-#         name: Binaries
-#         path: |
-#           ${{ runner.workspace }}/build/otclient_mac
-#         if-no-files-found: error
-
-#   Linux:
-#     name: Build linux version
-#     runs-on: ubuntu-20.04
-#     timeout-minutes: 60
-#     steps:
-#     - name: Checkout
-#       uses: actions/checkout@v2
-#       with:
-#           submodules: recursive
-
-#     - name: Get latest CMake
-#       uses: lukka/get-cmake@latest
-
-#     - name: Ubuntu - install opengl lua5.1 luajit
-#       run: sudo apt update && sudo apt install -y libglew-dev liblua5.1-0-dev libluajit-5.1-dev
-
-#     - name: Run vcpkg
-#       uses: lukka/run-vcpkg@v7
-#       with:
-#         vcpkgArguments: >
-#           boost-iostreams boost-asio boost-system boost-variant boost-lockfree boost-beast glew 
-#           boost-filesystem boost-uuid libogg libvorbis zlib opengl libzip openal-soft bzip2
-#           boost-process openssl physfs
-#         vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
-#         vcpkgTriplet: x64-linux
-#         vcpkgGitCommitId: 761c81d43335a5d5ccc2ec8ad90bd7e2cbba734e
-
-#     - name: Build with CMake
-#       uses: lukka/run-cmake@v3
-#       with:
-#         buildDirectory: ${{ runner.workspace }}/build
-#         cmakeAppendedArgs: '-G Ninja -DCMAKE_BUILD_TYPE="Release" -DVERSION=${{github.run_number}}'
-#         cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
-#         useVcpkgToolchainFile: true
-
-#     - name: Change name
-#       run: |
-#         mv '${{ runner.workspace }}/build/otclient' '${{ runner.workspace }}/build/otclient_linux'
-
-#     - name: Upload otclient
-#       uses: actions/upload-artifact@v2
-#       with:
-#         name: Binaries
-#         path: |
-#           ${{ runner.workspace }}/build/otclient_linux
-#         if-no-files-found: error

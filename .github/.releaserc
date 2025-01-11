@@ -18,7 +18,21 @@
       "@semantic-release/github",
       {
         "assets": [
-          { "path": "client.zip", "name": "mythbound.zip", "label": "Client (Windows)" }
+          {
+            "path": "client-windows-2022-windows-release/client.zip",
+            "name": "otclient-windows-v${version}.zip",
+            "label": "Windows Client"
+          },
+          {
+            "path": "client-ubuntu-22.04-linux-release/client.tar.gz",
+            "name": "otclient-linux-v${version}.tar.gz",
+            "label": "Linux Client"
+          },
+          {
+            "path": "client-macOS-14-macos-release/client.zip",
+            "name": "otclient-macos-v${version}.zip",
+            "label": "macOS Client"
+          }
         ]
       }
     ]
