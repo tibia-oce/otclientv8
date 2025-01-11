@@ -1,50 +1,25 @@
-# FindLibZip.cmake
-include(FindPackageHandleStandardArgs)
+# Try to find the libzip library
+#  LIBZIP_FOUND - system has libzip
+#  LIBZIP_INCLUDE_DIR_ZIP - the libzip include directory
+#  LIBZIP_INCLUDE_DIR_ZIPCONF - the libzip config include directory
+#  LIBZIP_LIBRARY - the libzip library
+#  LIBZIP_LIBRARIES - the libzip library and its dependencies
 
-if(WIN32)
-    # For Windows with vcpkg
-    find_path(LIBZIP_INCLUDE_DIR_ZIP zip.h
-        PATHS
-            ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include
-            ${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include
-        PATH_SUFFIXES
-            libzip
-    )
+FIND_PATH(LIBZIP_INCLUDE_DIR_ZIP NAMES zip.h PATH_SUFFIXES libzip)
+FIND_PATH(LIBZIP_INCLUDE_DIR_ZIPCONF NAMES zipconf.h PATH_SUFFIXES libzip)
 
-    find_path(LIBZIP_INCLUDE_DIR_ZIPCONF zipconf.h
-        PATHS
-            ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include
-            ${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/include
-        PATH_SUFFIXES
-            libzip
-    )
+SET(_LIBZIP_STATIC_LIBS libzip.a)
+SET(_LIBZIP_SHARED_LIBS zip libzip)
 
-    find_library(LIBZIP_LIBRARY
-        NAMES zip libzip
-        PATHS
-            ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib
-            ${VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib
-    )
-else()
-    # For Unix systems
-    find_package(PkgConfig)
-    pkg_check_modules(PC_LIBZIP QUIET libzip)
-    
-    find_path(LIBZIP_INCLUDE_DIR_ZIP zip.h
-        HINTS ${PC_LIBZIP_INCLUDE_DIRS}
-        PATH_SUFFIXES libzip)
+IF(USE_STATIC_LIBS)
+    FIND_LIBRARY(LIBZIP_LIBRARY NAMES ${_LIBZIP_STATIC_LIBS} ${_LIBZIP_SHARED_LIBS})
+ELSE()
+    FIND_LIBRARY(LIBZIP_LIBRARY NAMES ${_LIBZIP_SHARED_LIBS} ${_LIBZIP_STATIC_LIBS})
+ENDIF()
 
-    find_path(LIBZIP_INCLUDE_DIR_ZIPCONF zipconf.h
-        HINTS ${PC_LIBZIP_INCLUDE_DIRS})
-
-    find_library(LIBZIP_LIBRARY NAMES zip libzip
-        HINTS ${PC_LIBZIP_LIBRARY_DIRS})
-endif()
-
-find_package_handle_standard_args(LibZip
-    REQUIRED_VARS 
-        LIBZIP_LIBRARY 
-        LIBZIP_INCLUDE_DIR_ZIP 
-        LIBZIP_INCLUDE_DIR_ZIPCONF)
-
-mark_as_advanced(LIBZIP_INCLUDE_DIR_ZIP LIBZIP_INCLUDE_DIR_ZIPCONF LIBZIP_LIBRARY)
+INCLUDE(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(LibZip DEFAULT_MSG 
+    LIBZIP_LIBRARY 
+    LIBZIP_INCLUDE_DIR_ZIP 
+    LIBZIP_INCLUDE_DIR_ZIPCONF)
+MARK_AS_ADVANCED(LIBZIP_LIBRARY LIBZIP_INCLUDE_DIR_ZIP LIBZIP_INCLUDE_DIR_ZIPCONF)
