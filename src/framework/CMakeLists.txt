@@ -237,7 +237,7 @@ if(NOT WASM)
     find_package(Boost 1.67.0 COMPONENTS ${REQUIRED_BOOST_COMPONENTS} REQUIRED)
 
     #find zip
-    find_package(ZLIB REQUIRED)
+    find_package(ZLIB CONFIG REQUIRED)
     find_package(BZip2 REQUIRED)
 
     #find lua
@@ -256,7 +256,6 @@ if(NOT WASM)
 
     find_package(PhysFS REQUIRED)
     find_package(OpenSSL REQUIRED)
-    find_package(ZLIB REQUIRED)
 
     set(framework_LIBRARIES ${framework_LIBRARIES}
         ${Boost_LIBRARIES}
