@@ -98,8 +98,10 @@ jobs:
         echo "vcpkg commit ID: $vcpkgCommitId"
         echo "vcpkgGitCommitId=$vcpkgCommitId" >> $GITHUB_OUTPUT
 
-    - name: Get latest CMake and ninja
+    - name: Get latest CMake and Ninja
       uses: lukka/get-cmake@latest
+      with:
+        ninjaVersion: latest 
 
     - name: Run CMake
       uses: lukka/run-cmake@v10
