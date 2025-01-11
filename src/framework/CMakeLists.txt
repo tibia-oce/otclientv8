@@ -593,6 +593,15 @@ if(EXTRA_LIBS)
     set(framework_LIBRARIES ${framework_LIBRARIES} ${EXTRA_LIBS})
 endif()
 
+find_package(ZLIB REQUIRED)
+if(NOT ZLIB_FOUND)
+    message(FATAL_ERROR "ZLIB library not found")
+endif()
+
+find_package(LibZip REQUIRED)
+if(NOT LIBZIP_FOUND)
+    message(FATAL_ERROR "LibZip library not found")
+endif()
+
 include_directories(${framework_INCLUDE_DIRS})
 add_definitions(${framework_DEFINITIONS})
-

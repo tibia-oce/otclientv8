@@ -2,8 +2,14 @@
     "name": "otclientv8",
     "version-string": "1.0.0",
     "dependencies": [
-        "zlib",
-        "libzip",
+        {
+            "name": "zlib",
+            "version>=": "1.2.13"
+        },
+        {
+            "name": "libzip",
+            "features": ["bzip2"]
+        },
         "boost-iostreams",
         "boost-asio",
         "boost-beast",
