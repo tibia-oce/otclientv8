@@ -238,7 +238,7 @@ if(NOT WASM)
 
     #find zip
     find_package(LibZip REQUIRED)
-    find_package(ZLIB CONFIG REQUIRED)
+    find_package(ZLIB REQUIRED)
     find_package(BZip2 REQUIRED)
 
     #find lua
@@ -257,6 +257,7 @@ if(NOT WASM)
 
     find_package(PhysFS REQUIRED)
     find_package(OpenSSL REQUIRED)
+    find_package(ZLIB REQUIRED)
 
     set(framework_LIBRARIES ${framework_LIBRARIES}
         ${Boost_LIBRARIES}
@@ -319,7 +320,6 @@ if(WIN32)
     set(framework_DEFINITIONS ${framework_DEFINITIONS} -D_WIN32_WINNT=0x0501 -DWIN32)
     #set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -Wl,--large-address-aware") # strip all debug information
     set(SYSTEM_LIBRARIES "")
-    add_compile_options(-Wno-ambiguous-member-template)
 else()
     if(APPLE)
         set(framework_DEFINITIONS ${framework_DEFINITIONS} -D_REENTRANT) # enable thread safe code
@@ -594,4 +594,3 @@ endif()
 
 include_directories(${framework_INCLUDE_DIRS})
 add_definitions(${framework_DEFINITIONS})
-
