@@ -1,0 +1,207 @@
+name: Build & Release
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - master
+      - develop
+    paths:
+      - "data/**"
+      - "mods/**" 
+      - "modules/**"
+      - "layouts/**"
+      - ".github/**"
+      - "src/**"
+  push:
+    branches:
+      - master
+      - develop
+    paths:
+      - "data/**"
+      - "mods/**"
+      - "modules/**"
+      - "layouts/**"
+      - "src/**"
+
+env:
+  CMAKE_BUILD_PARALLEL_LEVEL: 2
+  MAKEFLAGS: '-j 2'
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
+  VCPKG_BINARY_SOURCES: 'clear;default,readwrite'
+
+jobs:
+  build:
+    name: ${{ matrix.os }}-${{ matrix.buildtype }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-2022
+            buildtype: windows-release
+            triplet: x64-windows
+            artifact-name: otclient-windows.exe
+            packages: sccache
+          - os: ubuntu-22.04
+            buildtype: linux-release
+            triplet: x64-linux
+            artifact-name: otclient
+            packages: sccache
+          - os: macOS-14
+            buildtype: macos-release
+            triplet: x64-osx
+            artifact-name: otclient
+            packages: sccache
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@main
+
+    - name: Install Linux Dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgl1-mesa-dev xorg-dev libasound2-dev libglu1-mesa-dev freeglut3-dev mesa-common-dev
+
+    - name: Install macOS Dependencies
+      if: runner.os == 'macOS'
+      run: |
+        brew install xquartz
+        brew install libx11
+        brew install libxext
+        brew install openal-soft
+        brew install physfs
+        brew install sdl2
+
+    - name: Cache vcpkg packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ${{ github.workspace }}/vcpkg
+          !${{ github.workspace }}/vcpkg/buildtrees
+          !${{ github.workspace }}/vcpkg/packages
+          !${{ github.workspace }}/vcpkg/downloads
+          !${{ github.workspace }}/vcpkg/installed
+        key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+        restore-keys: |
+          vcpkg-${{ runner.os }}-
+
+    - name: Cache build outputs
+      uses: actions/cache@v3
+      with:
+        path: |
+          ${{ github.workspace }}/build/${{ matrix.buildtype }}
+          !${{ github.workspace }}/build/${{ matrix.buildtype }}/CMakeCache.txt
+          !${{ github.workspace }}/build/${{ matrix.buildtype }}/CMakeFiles
+        key: build-${{ runner.os }}-${{ matrix.buildtype }}-${{ hashFiles('src/**/*.cpp', 'src/**/*.h') }}
+        restore-keys: |
+          build-${{ runner.os }}-${{ matrix.buildtype }}-
+
+    - name: Create vcpkg binary cache directory
+      run: mkdir -p ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+      env:
+        VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
+
+    - name: Restore artifacts and install vcpkg (Windows)
+      if: runner.os == 'Windows'
+      id: vcpkg-step-windows
+      shell: pwsh
+      run: |
+        $json=Get-Content vcpkg.json -Raw | ConvertFrom-Json
+        $vcpkgCommitId=$json.'builtin-baseline'
+        Write-Host "vcpkg commit ID: $vcpkgCommitId"
+        echo "vcpkgGitCommitId=$vcpkgCommitId" >> "$env:GITHUB_OUTPUT"
+
+    - name: Restore artifacts and install vcpkg (Unix)
+      if: runner.os != 'Windows'
+      id: vcpkg-step-unix
+      shell: bash
+      run: |
+        vcpkgCommitId=$(cat vcpkg.json | grep -o '"builtin-baseline": *"[^"]*"' | cut -d'"' -f4)
+        echo "vcpkg commit ID: $vcpkgCommitId"
+        echo "vcpkgGitCommitId=$vcpkgCommitId" >> $GITHUB_OUTPUT
+
+    - name: Get latest CMake and ninja
+      uses: lukka/get-cmake@latest
+
+    - name: Run CMake
+      uses: lukka/run-cmake@v10
+      with:
+        configurePreset: '${{ matrix.buildtype }}'
+        buildPreset: '${{ matrix.buildtype }}'
+
+    - name: Create and Upload Artifacts
+      uses: actions/upload-artifact@main
+      with:
+        name: otclient-${{ matrix.os }}-${{ matrix.buildtype }}-${{ github.sha }}
+        path: |
+          ${{ github.workspace }}/build/${{ matrix.buildtype }}/${{ matrix.artifact-name }}
+
+    - name: Create Client Package (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        $tempDir = "$env:GITHUB_WORKSPACE/client"
+        New-Item -Path $tempDir -ItemType Directory -Force
+        Copy-Item -Path "$env:GITHUB_WORKSPACE/data" -Destination "$env:GITHUB_WORKSPACE/client/data" -Recurse -Force
+        Copy-Item -Path "$env:GITHUB_WORKSPACE/mods" -Destination "$env:GITHUB_WORKSPACE/client/mods" -Recurse -Force  
+        Copy-Item -Path "$env:GITHUB_WORKSPACE/modules" -Destination "$env:GITHUB_WORKSPACE/client/modules" -Recurse -Force
+        Copy-Item -Path "$env:GITHUB_WORKSPACE/init.lua" -Destination "$env:GITHUB_WORKSPACE/client/init.lua" -Force
+        Copy-Item -Path "$env:GITHUB_WORKSPACE/build/${{ matrix.buildtype }}/otclient.exe" -Destination "$env:GITHUB_WORKSPACE/client/otclient.exe" -Force
+
+        # Copy required DLLs from vcpkg
+        $vcpkgBinPath = "$env:GITHUB_WORKSPACE/build/${{ matrix.buildtype }}/vcpkg_installed/x64-windows/bin"
+        if (Test-Path $vcpkgBinPath) {
+            Get-ChildItem -Path $vcpkgBinPath -Filter "*.dll" | ForEach-Object {
+                Copy-Item $_.FullName -Destination "$env:GITHUB_WORKSPACE/client/" -Force
+            }
+        }
+
+        # Copy system DLLs if needed - mainly for VCRUNTIME
+        $systemDlls = @(
+            "msvcp140.dll",
+            "vcruntime140.dll",
+            "vcruntime140_1.dll"
+        )
+        foreach ($dll in $systemDlls) {
+            $systemPath = "C:\Windows\System32\$dll"
+            if (Test-Path $systemPath) {
+                Copy-Item $systemPath -Destination "$env:GITHUB_WORKSPACE/client/" -Force
+            }
+        }
+        Compress-Archive -Path "$env:GITHUB_WORKSPACE/client" -DestinationPath "$env:GITHUB_WORKSPACE/client.zip"
+
+    - name: Create Client Package (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        mkdir -p client
+        cp -r data client/
+        cp -r mods client/
+        cp -r modules client/
+        cp init.lua client/
+        cp build/${{ matrix.buildtype }}/otclient client/
+        chmod +x client/otclient
+        tar -czf client.tar.gz client/
+
+    - name: Create Client Package (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        mkdir -p client
+        cp -R data client/
+        cp -R mods client/
+        cp -R modules client/
+        cp init.lua client/
+        cp build/${{ matrix.buildtype }}/otclient client/
+        chmod +x client/otclient
+        zip -r client.zip client
+
+    - name: Upload Client Package
+      uses: actions/upload-artifact@v4
+      with:
+        name: client-${{ matrix.os }}-${{ matrix.buildtype }}
+        path: |
+          ${{ runner.os == 'Windows' && 'client.zip' || runner.os == 'Linux' && 'client.tar.gz' || 'client.zip' }}
