@@ -17,7 +17,9 @@ on:
     branches:
       - master
       - develop
+      - fix/cmake
     paths:
+      - ".github/**"
       - "data/**"
       - "mods/**"
       - "modules/**"
@@ -41,91 +43,47 @@ jobs:
             buildtype: linux-release
             triplet: x64-linux
             artifact-name: otclient
-            packages: sccache
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@main
 
     - name: Install Linux Dependencies
+      run: >
+        sudo apt-get update && sudo apt-get install -y ccache libgl1-mesa-dev xorg-dev libasound2-dev libglu1-mesa-dev freeglut3-dev mesa-common-dev libglew-dev libx11-dev linux-headers-$(uname -r)
+
+    - name: Switch to gcc-12
       run: |
-        sudo apt-get update
-        sudo apt-get install -y libgl1-mesa-dev xorg-dev libasound2-dev libglu1-mesa-dev freeglut3-dev mesa-common-dev
-
-    - name: Cache vcpkg packages
-      uses: actions/cache@v3
-      with:
-        path: |
-          ${{ github.workspace }}/vcpkg
-          !${{ github.workspace }}/vcpkg/buildtrees
-          !${{ github.workspace }}/vcpkg/packages
-          !${{ github.workspace }}/vcpkg/downloads
-          !${{ github.workspace }}/vcpkg/installed  # Add this line
-        key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
-        restore-keys: |
-          vcpkg-${{ runner.os }}-
-
-    - name: Cache build outputs
-      uses: actions/cache@v3
-      with:
-        path: |
-          ${{ github.workspace }}/build/${{ matrix.buildtype }}
-          !${{ github.workspace }}/build/${{ matrix.buildtype }}/CMakeCache.txt
-          !${{ github.workspace }}/build/${{ matrix.buildtype }}/CMakeFiles
-        key: build-${{ runner.os }}-${{ matrix.buildtype }}-${{ hashFiles('src/**/*.cpp', 'src/**/*.h') }}
-        restore-keys: |
-          build-${{ runner.os }}-${{ matrix.buildtype }}-
-
-    - name: Create vcpkg binary cache directory
-      run: mkdir -p ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-
-    - name: Setup vcpkg
-      uses: lukka/run-vcpkg@v11
-      with:
-        vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-      env:
-        VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
+        sudo apt install gcc-12 g++-12
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 100 --slave /usr/bin/g++ g++ /usr/bin/g++-12 --slave /usr/bin/gcov gcov /usr/bin/gcov-12
+        sudo update-alternatives --set gcc /usr/bin/gcc-12
 
     - name: Restore artifacts and install vcpkg
-      id: vcpkg-step-unix
-      shell: bash
+      id: vcpkg-step
       run: |
-        vcpkgCommitId=$(cat vcpkg.json | grep -o '"builtin-baseline": *"[^"]*"' | cut -d'"' -f4)
+        vcpkgCommitId=$(grep '.builtin-baseline' vcpkg.json | awk -F: '{print $2}' | tr -d '," ')
         echo "vcpkg commit ID: $vcpkgCommitId"
-        echo "vcpkgGitCommitId=$vcpkgCommitId" >> $GITHUB_OUTPUT
+        echo "vcpkgGitCommitId=$vcpkgCommitId" >> "$GITHUB_OUTPUT"
 
-    - name: Get latest CMake and Ninja
-      uses: lukka/get-cmake@latest
+    - name: Get vcpkg commit id from vcpkg.json
+      uses: lukka/run-vcpkg@main
       with:
-        ninjaVersion: latest 
+        vcpkgGitCommitId: ${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}
+        vcpkgJsonIgnores: "['**/vcpkg/**', '**/browser/overlay-ports/**']"
+
+    - name: Get latest CMake and ninja
+      uses: lukka/get-cmake@main
 
     - name: Run CMake
-      uses: lukka/run-cmake@v10
+      uses: lukka/run-cmake@main
       with:
-        configurePreset: '${{ matrix.buildtype }}'
-        buildPreset: '${{ matrix.buildtype }}'
+        configurePreset: ${{ matrix.buildtype }}
+        buildPreset: ${{ matrix.buildtype }}
 
-    - name: Create and Upload Artifacts
+    - name: Create and Upload Artifact
+      if: ${{ github.event_name != 'pull_request' }}
       uses: actions/upload-artifact@main
       with:
         name: otclient-${{ matrix.os }}-${{ matrix.buildtype }}-${{ github.sha }}
         path: |
-          ${{ github.workspace }}/build/${{ matrix.buildtype }}/${{ matrix.artifact-name }}
-
-    - name: Create Client Package (Linux)
-      run: |
-        mkdir -p client
-        cp -r data client/
-        cp -r mods client/
-        cp -r modules client/
-        cp init.lua client/
-        cp build/${{ matrix.buildtype }}/otclient client/
-        chmod +x client/otclient
-        tar -czf client.tar.gz client/
-
-    - name: Upload Client Package
-      uses: actions/upload-artifact@v4
-      with:
-        name: client-${{ matrix.os }}-${{ matrix.buildtype }}
-        path: |
-          ${{ 'client.tar.gz' }}
+          ${{ github.workspace }}/otclient
