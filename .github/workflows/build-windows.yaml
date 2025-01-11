@@ -43,6 +43,8 @@ jobs:
             triplet: x64-windows
             packages: >
               sccache
+              zlib
+              libzip
 
     steps:
       - name: Checkout repository
@@ -57,6 +59,10 @@ jobs:
           restore-keys: |
             ccache-${{ matrix.os }}
 
+      - name: Install pkg-config
+        run: choco install pkgconfiglite
+        shell: powershell
+      
       - name: Restore artifacts and install vcpkg
         id: vcpkg-step
         run: |

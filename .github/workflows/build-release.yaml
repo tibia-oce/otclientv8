@@ -81,7 +81,7 @@ jobs:
           !${{ github.workspace }}/vcpkg/buildtrees
           !${{ github.workspace }}/vcpkg/packages
           !${{ github.workspace }}/vcpkg/downloads
-          !${{ github.workspace }}/vcpkg/installed
+          !${{ github.workspace }}/vcpkg/installed  # Add this line
         key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
         restore-keys: |
           vcpkg-${{ runner.os }}-

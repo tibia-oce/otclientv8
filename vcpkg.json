@@ -2,7 +2,6 @@
     "name": "otclientv8",
     "version-string": "1.0.0",
     "dependencies": [
-        "zlib",
         "boost-iostreams",
         "boost-asio",
         "boost-beast",
@@ -16,6 +15,8 @@
         "physfs",
         "libogg",
         "libvorbis",
+        "zlib",
+        "libzip",
         "openssl",
         "openal-soft",
         "glew",
