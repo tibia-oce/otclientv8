@@ -94,18 +94,27 @@ jobs:
         configurePreset: ${{ matrix.buildtype }}
         buildPreset: ${{ matrix.buildtype }}
 
-    - name: Debug - List Directory Contents
+    - name: Create Client Package
       run: |
-        echo "Contents of ${{ github.workspace }}:"
-        ls -la ${{ github.workspace }}
-        echo "Contents of ${{ github.workspace }}/build/${{ matrix.buildtype }}:"
-        ls -la ${{ github.workspace }}/build/${{ matrix.buildtype }}
-        
+        mkdir -p ${{ github.workspace }}/client
+        cp -R ${{ github.workspace }}/data ${{ github.workspace }}/client/
+        cp -R ${{ github.workspace }}/mods ${{ github.workspace }}/client/
+        cp -R ${{ github.workspace }}/modules ${{ github.workspace }}/client/
+        cp ${{ github.workspace }}/init.lua ${{ github.workspace }}/client/
+        cp ${{ github.workspace }}/build/${{ matrix.buildtype }}/otclient ${{ github.workspace }}/client/
+        chmod +x ${{ github.workspace }}/client/otclient
+        tar -czf ${{ github.workspace }}/client.tar.gz -C ${{ github.workspace }} client
+
     - name: Create and Upload Artifact
       if: ${{ github.event_name != 'pull_request' }}
       uses: actions/upload-artifact@main
       with:
         name: otclient-${{ matrix.os }}-${{ matrix.buildtype }}-${{ github.sha }}
-        path: |
-          ${{ github.workspace }}/build/${{ matrix.buildtype }}/${{ matrix.artifact-name }}
-  
+        path: ${{ github.workspace }}/client/*
+
+    - name: Create and Upload Archive
+      if: ${{ github.event_name != 'pull_request' }}
+      uses: actions/upload-artifact@main
+      with:
+        name: otclient-${{ matrix.os }}-${{ matrix.buildtype }}-${{ github.sha }}-archive
+        path: ${{ github.workspace }}/client.tar.gz
