@@ -107,8 +107,6 @@ jobs:
         vcpkgDirectory: '${{ github.workspace }}/vcpkg'
         doNotUpdateVcpkg: true
         runVcpkgInstall: true
-      env:
-        VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
 
     - name: Restore artifacts and install vcpkg (Windows)
       if: runner.os == 'Windows'
