@@ -81,8 +81,35 @@ jobs:
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@main
 
+      - name: Debug vcpkg installation
+        shell: pwsh
+        run: |
+          Write-Host "Environment Variables:"
+          Write-Host "VCPKG_ROOT: $env:VCPKG_ROOT"
+          Write-Host "VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}"
+          Write-Host "_VCPKG_INSTALLED_DIR: $env:_VCPKG_INSTALLED_DIR"
+          
+          Write-Host "`nVcpkg installed directory contents:"
+          if (Test-Path "$env:VCPKG_ROOT/installed/${{ matrix.triplet }}") {
+            Get-ChildItem "$env:VCPKG_ROOT/installed/${{ matrix.triplet }}" -Recurse | 
+              Where-Object { $_.Name -match '(lua|zip|zlib|physfs|glew|openal|vorbis|ogg|openssl)\.(lib|dll|h)$' } |
+              ForEach-Object { Write-Host $_.FullName }
+          }
+          
+          Write-Host "`nChecking build directory:"
+          if (Test-Path "build/vcpkg_installed/${{ matrix.triplet }}") {
+            Get-ChildItem "build/vcpkg_installed/${{ matrix.triplet }}" -Recurse |
+              Where-Object { $_.Name -match '(lua|zip|zlib|physfs|glew|openal|vorbis|ogg|openssl)\.(lib|dll|h)$' } |
+              ForEach-Object { Write-Host $_.FullName }
+          }
+
       - name: Run CMake
         uses: lukka/run-cmake@main
+        env:
+          VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
+          VCPKG_TARGET_TRIPLET: ${{ matrix.triplet }}
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+          _VCPKG_INSTALLED_DIR: ${{ github.workspace }}/build/vcpkg_installed
         with:
           configurePreset: ${{ matrix.buildtype }}
           buildPreset: ${{ matrix.buildtype }}
