@@ -236,22 +236,9 @@ if(NOT WASM)
     set(Boost_USE_STATIC_LIBS ${USE_STATIC_LIBS})
     find_package(Boost 1.67.0 COMPONENTS ${REQUIRED_BOOST_COMPONENTS} REQUIRED)
 
-    if(WIN32)
-        set(ZLIB_ROOT "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
-        set(ZLIB_LIBRARY "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/zlib.lib")
-        set(ZLIB_INCLUDE_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include")
-    endif()
-
     #find zip
-    find_package(ZLIB REQUIRED)
-    if(NOT ZLIB_FOUND)
-        message(FATAL_ERROR "ZLIB not found")
-    endif()
-
     find_package(LibZip REQUIRED)
-    if(NOT LibZip_FOUND)
-        message(FATAL_ERROR "LibZip not found")
-    endif()
+    find_package(ZLIB REQUIRED)
     find_package(BZip2 REQUIRED)
 
     #find lua
