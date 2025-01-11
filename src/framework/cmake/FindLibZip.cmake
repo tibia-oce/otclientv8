@@ -1,29 +1,26 @@
 find_package(PkgConfig)
-pkg_check_modules(PC_LIBZIP QUIET libzip)
-
-find_path(LIBZIP_INCLUDE_DIR_ZIP
+find_path(LIBZIP_INCLUDE_DIR
     NAMES zip.h
-    HINTS ${PC_LIBZIP_INCLUDE_DIRS})
-
-find_path(LIBZIP_INCLUDE_DIR_ZIPCONF
-    NAMES zipconf.h
-    HINTS ${PC_LIBZIP_INCLUDE_DIRS})
+    PATHS
+    ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include
+    PATH_SUFFIXES libzip
+)
 
 find_library(LIBZIP_LIBRARY
-    NAMES zip)
+    NAMES zip libzip
+    PATHS
+    ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib
+)
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(
-    LIBZIP DEFAULT_MSG
-    LIBZIP_LIBRARY LIBZIP_INCLUDE_DIR_ZIP LIBZIP_INCLUDE_DIR_ZIPCONF)
+find_package_handle_standard_args(LibZip
+    REQUIRED_VARS LIBZIP_LIBRARY LIBZIP_INCLUDE_DIR
+)
 
-set(LIBZIP_VERSION 0)
-
-if (LIBZIP_INCLUDE_DIR_ZIPCONF)
-  FILE(READ "${LIBZIP_INCLUDE_DIR_ZIPCONF}/zipconf.h" _LIBZIP_VERSION_CONTENTS)
-  if (_LIBZIP_VERSION_CONTENTS)
-    STRING(REGEX REPLACE ".*#define LIBZIP_VERSION \"([0-9.]+)\".*" "\\1" LIBZIP_VERSION "${_LIBZIP_VERSION_CONTENTS}")
-  endif ()
-endif ()
-
-set(LIBZIP_VERSION ${LIBZIP_VERSION} CACHE STRING "Version number of libzip")
+if(LibZip_FOUND AND NOT TARGET LibZip::LibZip)
+    add_library(LibZip::LibZip UNKNOWN IMPORTED)
+    set_target_properties(LibZip::LibZip PROPERTIES
+        IMPORTED_LOCATION "${LIBZIP_LIBRARY}"
+        INTERFACE_INCLUDE_DIRECTORIES "${LIBZIP_INCLUDE_DIR}"
+    )
+endif()

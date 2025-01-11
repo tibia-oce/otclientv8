@@ -41,7 +41,7 @@ jobs:
             buildtype: windows-release
             triplet: x64-windows
             artifact-name: otclient-windows.exe
-            packages: sccache pkgconfiglite
+            packages: sccache
           - os: ubuntu-22.04
             buildtype: linux-release
             triplet: x64-linux
@@ -105,6 +105,8 @@ jobs:
       uses: lukka/run-vcpkg@v11
       with:
         vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+      env:
+        VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
 
     - name: Restore artifacts and install vcpkg (Windows)
       if: runner.os == 'Windows'
