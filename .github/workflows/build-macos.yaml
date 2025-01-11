@@ -88,18 +88,10 @@ jobs:
         cp ${{ github.workspace }}/init.lua ${{ github.workspace }}/client/
         cp ${{ github.workspace }}/build/${{ matrix.buildtype }}/otclient ${{ github.workspace }}/client/
         chmod +x ${{ github.workspace }}/client/otclient
-        zip -r ${{ github.workspace }}/client.zip ${{ github.workspace }}/client
 
     - name: Create and Upload Artifact
       if: ${{ github.event_name != 'pull_request' }}
       uses: actions/upload-artifact@main
       with:
-        name: otclient-${{ matrix.os }}-${{ matrix.buildtype }}-${{ github.sha }}
-        path: ${{ github.workspace }}/client/*
-
-    - name: Create and Upload ZIP Archive
-      if: ${{ github.event_name != 'pull_request' }}
-      uses: actions/upload-artifact@main
-      with:
-        name: otclient-${{ matrix.os }}-${{ matrix.buildtype }}-${{ github.sha }}-zip
-        path: ${{ github.workspace }}/client.zip
+        name: client
+        path: ${{ github.workspace }}/client
