@@ -11,7 +11,7 @@ on:
       - "mods/**" 
       - "modules/**"
       - "layouts/**"
-      - ".github/**"
+      - ".github/workflows/build-macos.yaml"
       - "src/**"
   push:
     branches:
@@ -19,7 +19,7 @@ on:
       - develop
       - fix/cmake
     paths:
-      - ".github/**"
+      - ".github/workflows/build-macos.yaml"
       - "data/**"
       - "mods/**"
       - "modules/**"
