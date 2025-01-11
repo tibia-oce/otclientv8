@@ -46,12 +46,6 @@ if(WIN32)
     endif()
 endif()
 
-# Now find LibZip
-find_package(LibZip REQUIRED)
-if(NOT LibZip_FOUND)
-    message(FATAL_ERROR "LibZip not found")
-endif()
-
 # add executable icon for win32 platforms
 if(WIN32)
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/otcicon.o

@@ -90,7 +90,6 @@ jobs:
         chmod +x ${{ github.workspace }}/client/otclient
 
     - name: Create and Upload Artifact
-      if: ${{ github.event_name != 'pull_request' }}
       uses: actions/upload-artifact@main
       with:
         name: client
