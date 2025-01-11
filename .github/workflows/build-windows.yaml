@@ -43,8 +43,6 @@ jobs:
             triplet: x64-windows
             packages: >
               sccache
-              zlib
-              libzip
 
     steps:
       - name: Checkout repository

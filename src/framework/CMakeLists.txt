@@ -237,7 +237,6 @@ if(NOT WASM)
     find_package(Boost 1.67.0 COMPONENTS ${REQUIRED_BOOST_COMPONENTS} REQUIRED)
 
     #find zip
-    find_package(LibZip REQUIRED)
     find_package(ZLIB REQUIRED)
     find_package(BZip2 REQUIRED)
 
@@ -265,7 +264,6 @@ if(NOT WASM)
         ${PHYSFS_LIBRARY}
         ${OPENSSL_LIBRARIES}
         ${ZLIB_LIBRARY}
-        ${LIBZIP_LIBRARY}
 	${ZLIB_LIBRARY}
 	${BZIP2_LIBRARIES}
     )
@@ -280,8 +278,6 @@ if(NOT WASM)
         ${PHYSFS_INCLUDE_DIR}
         ${OPENSSL_INCLUDE_DIR}
         ${framework_INCLUDE_DIRS}
-        ${LIBZIP_INCLUDE_DIR_ZIP}
-        ${LIBZIP_INCLUDE_DIR_ZIPCONF}
 	${ZLIB_INCLUDE_DIR}
 	${BZIP2_INCLUDE_DIR}
     )
