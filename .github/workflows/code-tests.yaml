@@ -7,15 +7,19 @@ on:
       - master
       - develop
     paths:
+      - "mods/**" 
+      - "modules/**"
+      - "layouts/**"
       - "src/**"
-      - "data/**"
   push:
     branches:
       - master
       - develop
     paths:
+      - "mods/**" 
+      - "modules/**"
+      - "layouts/**"
       - "src/**"
-      - "data/**"
 
 jobs:
   lua:
@@ -24,9 +28,8 @@ jobs:
       - name: Check out code.
         uses: actions/checkout@main
 
-      # todo: doesn't look like existing canary or tfs use lua testing yet
-      # consider testing on new modules instead
-      - name: Linting and formatting
+      # todo: https://github.com/OTAcademy/otclientv8/blob/master/.github/workflows/pr-test.yml
+      - name: Tests
         run: true
 
   cpp:
@@ -35,6 +38,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # todo: see example https://github.com/opentibiabr/canary/tree/main/tests
-      - name: Linting and formatting
+      # todo: https://github.com/opentibiabr/canary/tree/main/tests
+      - name: Tests
         run: true

@@ -39,6 +39,11 @@ if(WIN32)
     set(executable_SOURCES ${executable_SOURCES} otcicon.o)
 endif()
 
+if(APPLE)
+    # Add this line to handle unsigned long conversion for Lua
+    add_definitions(-DUSE_UNSIGNED_LONG_CONVERSION)
+endif()
+
 if(VERSION)
     add_definitions(-D"VERSION=\\"${VERSION}\\"")
 endif()

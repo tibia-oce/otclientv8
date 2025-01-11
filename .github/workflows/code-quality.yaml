@@ -7,15 +7,19 @@ on:
       - master
       - develop
     paths:
+      - "mods/**" 
+      - "modules/**"
+      - "layouts/**"
       - "src/**"
-      - "data/**"
   push:
     branches:
       - master
       - develop
     paths:
+      - "mods/**" 
+      - "modules/**"
+      - "layouts/**"
       - "src/**"
-      - "data/**"
 
 jobs:
   lua:
@@ -25,7 +29,7 @@ jobs:
         uses: actions/checkout@main
 
       # todo: https://github.com/JohnnyMorganz/stylua-action/tree/v3/
-      - name: Tests
+      - name: Linting and formatting
         run: true
 
   cpp:
@@ -35,5 +39,5 @@ jobs:
         uses: actions/checkout@main
 
       # todo: https://github.com/DoozyX/clang-format-lint-action
-      - name: Tests
+      - name: Linting and formatting
         run: true
