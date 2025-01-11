@@ -40,7 +40,6 @@ if(WIN32)
 endif()
 
 if(APPLE)
-    # Add this line to handle unsigned long conversion for Lua
     add_definitions(-DUSE_UNSIGNED_LONG_CONVERSION)
 endif()
 

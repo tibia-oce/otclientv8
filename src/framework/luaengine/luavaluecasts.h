@@ -70,12 +70,10 @@ inline int push_luavalue(uint64 v) { push_luavalue((double)v); return 1; }
 inline bool luavalue_cast(int index, uint64& v) { double d; bool r = luavalue_cast(index, d); v = d; return r; }
 
 #ifdef __APPLE__
-// macOS-specific unsigned long conversion
 inline int push_luavalue(unsigned long v) { 
     push_luavalue(static_cast<uint64_t>(v)); 
     return 1; 
 }
-
 inline bool luavalue_cast(int index, unsigned long& v) { 
     uint64_t temp;
     bool r = luavalue_cast(index, temp);
