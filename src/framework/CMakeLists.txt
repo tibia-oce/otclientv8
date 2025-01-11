@@ -237,6 +237,7 @@ if(NOT WASM)
     find_package(Boost 1.67.0 COMPONENTS ${REQUIRED_BOOST_COMPONENTS} REQUIRED)
 
     #find zip
+    find_package(LibZip REQUIRED)
     find_package(ZLIB CONFIG REQUIRED)
     find_package(BZip2 REQUIRED)
 
@@ -263,6 +264,7 @@ if(NOT WASM)
         ${PHYSFS_LIBRARY}
         ${OPENSSL_LIBRARIES}
         ${ZLIB_LIBRARY}
+        ${LIBZIP_LIBRARY}
 	${ZLIB_LIBRARY}
 	${BZIP2_LIBRARIES}
     )
@@ -277,6 +279,8 @@ if(NOT WASM)
         ${PHYSFS_INCLUDE_DIR}
         ${OPENSSL_INCLUDE_DIR}
         ${framework_INCLUDE_DIRS}
+        ${LIBZIP_INCLUDE_DIR_ZIP}
+        ${LIBZIP_INCLUDE_DIR_ZIPCONF}
 	${ZLIB_INCLUDE_DIR}
 	${BZIP2_INCLUDE_DIR}
     )
@@ -315,7 +319,7 @@ if(WIN32)
     set(framework_DEFINITIONS ${framework_DEFINITIONS} -D_WIN32_WINNT=0x0501 -DWIN32)
     #set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -Wl,--large-address-aware") # strip all debug information
     set(SYSTEM_LIBRARIES "")
-    # add_compile_options(-Wno-ambiguous-member-template)
+    add_compile_options(-Wno-ambiguous-member-template)
 else()
     if(APPLE)
         set(framework_DEFINITIONS ${framework_DEFINITIONS} -D_REENTRANT) # enable thread safe code
@@ -590,3 +594,4 @@ endif()
 
 include_directories(${framework_INCLUDE_DIRS})
 add_definitions(${framework_DEFINITIONS})
+

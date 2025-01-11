@@ -16,6 +16,7 @@
         "libogg",
         "libvorbis",
         "zlib",
+        "libzip",
         "openssl",
         "openal-soft",
         "glew",
