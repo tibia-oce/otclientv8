@@ -41,7 +41,7 @@ jobs:
             buildtype: windows-release
             triplet: x64-windows
             artifact-name: otclient-windows.exe
-            packages: sccache
+            packages: sccache pkgconfiglite
           - os: ubuntu-22.04
             buildtype: linux-release
             triplet: x64-linux
@@ -82,6 +82,7 @@ jobs:
           !${{ github.workspace }}/vcpkg/buildtrees
           !${{ github.workspace }}/vcpkg/packages
           !${{ github.workspace }}/vcpkg/downloads
+          !${{ github.workspace }}/vcpkg/installed  # Add this line
         key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
         restore-keys: |
           vcpkg-${{ runner.os }}-
