@@ -62,7 +62,6 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y libgl1-mesa-dev xorg-dev libasound2-dev libglu1-mesa-dev freeglut3-dev mesa-common-dev
-        # libx11-dev libxcb1-dev libx11-xcb-dev
 
     - name: Install macOS Dependencies
       if: runner.os == 'macOS'
@@ -82,7 +81,7 @@ jobs:
           !${{ github.workspace }}/vcpkg/buildtrees
           !${{ github.workspace }}/vcpkg/packages
           !${{ github.workspace }}/vcpkg/downloads
-          !${{ github.workspace }}/vcpkg/installed  # Add this line
+          !${{ github.workspace }}/vcpkg/installed
         key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
         restore-keys: |
           vcpkg-${{ runner.os }}-
