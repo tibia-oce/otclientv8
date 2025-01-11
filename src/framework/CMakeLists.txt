@@ -293,6 +293,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInf
 else()
     message(STATUS "Debug information: OFF")
     set(framework_DEFINITIONS ${framework_DEFINITIONS} -DNDEBUG) # NDEBUG disable asserts
+    add_compile_options(-Wno-ambiguous-member-template)
     if(NOT APPLE)
         set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -Wl,-s") # strip all debug information
         if(NOT WASM)
