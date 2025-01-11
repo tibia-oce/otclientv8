@@ -78,14 +78,6 @@ jobs:
           vcpkgGitCommitId: ${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}
           vcpkgJsonIgnores: "['**/vcpkg/**', '**/browser/overlay-ports/**']"
 
-      - name: Debug vcpkg paths
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          Write-Host "VCPKG_ROOT: $env:VCPKG_ROOT"
-          Write-Host "Listing vcpkg installed directory:"
-          Get-ChildItem "${env:VCPKG_ROOT}/installed/x64-windows" -Recurse | Where-Object { $_.Name -match 'zip|zlib' }
-
       - name: Run CMake
         uses: lukka/run-cmake@main
         with:
