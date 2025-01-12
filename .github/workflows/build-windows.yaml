@@ -26,88 +26,154 @@ on:
       - "layouts/**"
       - "src/**"
 
-env:
-  CMAKE_BUILD_PARALLEL_LEVEL: 2
-  MAKEFLAGS: '-j 2'
-  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
-  VCPKG_BINARY_SOURCES: 'clear;default,readwrite'
-
 jobs:
-  build:
-    name: ${{ matrix.os }}-${{ matrix.buildtype }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-2022]
-        buildtype: [windows-release]
-        include:
-          - os: windows-2022
-            triplet: x64-windows
-            packages: >
-              sccache
+  Windows:
+    name: Build windows version
+    runs-on: windows-2022
+    timeout-minutes: 120
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@main
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+          submodules: recursive
 
-      - name: CCache
-        uses: hendrikmuhs/ccache-action@main
-        with:
-          max-size: "1G"
-          variant: "sccache"
-          key: ccache-${{ matrix.os }}-${{ matrix.buildtype }}
-          restore-keys: |
-            ccache-${{ matrix.os }}
+    - name: Setup MSBuild and add to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+      id: setup_msbuild
 
-      - name: Install pkg-config
-        run: choco install pkgconfiglite
-        shell: powershell
-      
-      - name: Restore artifacts and install vcpkg
-        id: vcpkg-step
-        run: |
-          $json=Get-Content vcpkg.json -Raw | ConvertFrom-Json
-          $vcpkgCommitId=$json.'builtin-baseline'
-          Write-Host "vcpkg commit ID: $vcpkgCommitId"
-          echo "vcpkgGitCommitId=$vcpkgCommitId" >> "$GITHUB_OUTPUT"
+    - name: Run vcpkg
+      uses: lukka/run-vcpkg@v7
+      with:
+        vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
+        vcpkgTriplet: x86-windows-static
+        vcpkgGitCommitId: 3b3bd424827a1f7f4813216f6b32b6c61e386b2e
+        vcpkgArguments: >
+          boost-iostreams boost-asio boost-beast boost-system boost-variant boost-lockfree boost-process boost-program-options boost-uuid boost-filesystem
+          luajit glew physfs openal-soft libogg libvorbis zlib libzip bzip2 openssl
 
-      - name: Get vcpkg commit id from vcpkg.json
-        uses: lukka/run-vcpkg@main
-        with:
-          vcpkgGitURL: "https://github.com/microsoft/vcpkg.git"
-          vcpkgGitCommitId: ${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}
-          vcpkgJsonIgnores: "['**/vcpkg/**', '**/browser/overlay-ports/**']"
+    - name: Integrate vcpkg
+      run: |
+        ${{ runner.workspace }}/vcpkg/vcpkg integrate install
+        
+    - name: Compile otclient_dx
+      timeout-minutes: 20
+      run: |
+        cd vc16
+        MSBuild /property:Configuration=DirectX /p:BUILD_REVISION=${{github.run_number}}
+        
+    - name: Compile otclient_gl
+      timeout-minutes: 20
+      run: |
+        cd vc16
+        MSBuild /property:Configuration=OpenGL /p:BUILD_REVISION=${{github.run_number}}
 
-      - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@main
+    #- name: Sign binaries
+    #  run: |
+    #     .\tools\sign\signtool.exe sign /f .\tools\sign\certificate.pfx /p ${{ secrets.SIGN_PASSWORD }} /fd SHA256 /t http://timestamp.digicert.com /d "OTclientV8" otclient_gl.exe
+    #     .\tools\sign\signtool.exe sign /f .\tools\sign\certificate.pfx /p ${{ secrets.SIGN_PASSWORD }} /fd SHA256 /t http://timestamp.digicert.com /d "OTclientV8" otclient_dx.exe
 
-      - name: Run CMake
-        uses: lukka/run-cmake@main
-        with:
-          configurePreset: ${{ matrix.buildtype }}
-          buildPreset: ${{ matrix.buildtype }}
+    - name: Upload binaries
+      uses: 'actions/upload-artifact@v2'
+      with:
+        name: Download-binaries
+        path: |
+          otclient_gl.exe
+          otclient_dx.exe
+        if-no-files-found: error
 
-      - name: Create and Upload Artifact (exe)
-        uses: actions/upload-artifact@main
-        with:
-          name: otclient-${{ matrix.os }}-${{ matrix.buildtype }}-${{ github.sha }}
-          path: |
-            ${{ github.workspace }}/otclient.exe
+  Mac:
+    name: Build mac os version
+    runs-on: 	macos-11
+    timeout-minutes: 120
 
-      - name: Create Client Package
-        run: |
-          mkdir -p ${{ github.workspace }}/client
-          cp -R ${{ github.workspace }}/layouts ${{ github.workspace }}/client/
-          cp -R ${{ github.workspace }}/*.dll ${{ github.workspace }}/client/
-          cp -R ${{ github.workspace }}/data ${{ github.workspace }}/client/
-          cp -R ${{ github.workspace }}/mods ${{ github.workspace }}/client/
-          cp -R ${{ github.workspace }}/modules ${{ github.workspace }}/client/
-          cp ${{ github.workspace }}/init.lua ${{ github.workspace }}/client/
-          cp ${{ github.workspace }}/build/${{ matrix.buildtype }}/otclient ${{ github.workspace }}/client/
-          chmod +x ${{ github.workspace }}/client/otclient
-  
-      - name: Create and Upload Artifact
-        uses: actions/upload-artifact@main
-        with:
-          name: client
-          path: ${{ github.workspace }}/client
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+          submodules: recursive
+
+    - name: Get latest CMake
+      uses: lukka/get-cmake@latest
+
+    - name: MacOS - install physfs pkgconfig luajit xquartz
+      run: brew install physfs pkgconfig luajit xquartz
+
+    - name: Run vcpkg
+      uses: lukka/run-vcpkg@v7
+      with:
+        vcpkgArguments: >
+          boost-iostreams boost-asio boost-system boost-variant boost-lockfree boost-beast glew 
+          boost-filesystem boost-uuid libogg libvorbis zlib opengl libzip openal-soft bzip2
+          boost-process openssl
+        vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
+        vcpkgTriplet: x64-osx
+        vcpkgGitCommitId: 761c81d43335a5d5ccc2ec8ad90bd7e2cbba734e
+
+    - name: Build with CMake
+      uses: lukka/run-cmake@v3
+      with:
+        buildDirectory: ${{ runner.workspace }}/build
+        cmakeAppendedArgs: '-G Ninja -DCMAKE_BUILD_TYPE="Release" -DVERSION=${{github.run_number}}'
+        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+        useVcpkgToolchainFile: true
+
+    - name: Change name
+      run: |
+        mv '${{ runner.workspace }}/build/otclient' '${{ runner.workspace }}/build/otclient_mac'
+
+    - name: Upload otclient
+      uses: actions/upload-artifact@v2
+      with:
+        name: Download-binaries
+        path: |
+          ${{ runner.workspace }}/build/otclient_mac
+        if-no-files-found: error
+
+  Linux:
+    name: Build linux version
+    runs-on: ubuntu-20.04
+    timeout-minutes: 120
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+          submodules: recursive
+
+    - name: Get latest CMake
+      uses: lukka/get-cmake@latest
+
+    - name: Ubuntu - install opengl lua5.1 luajit
+      run: sudo apt update && sudo apt install -y libglew-dev liblua5.1-0-dev libluajit-5.1-dev
+
+    - name: Run vcpkg
+      uses: lukka/run-vcpkg@v7
+      with:
+        vcpkgArguments: >
+          boost-iostreams boost-asio boost-system boost-variant boost-lockfree boost-beast glew 
+          boost-filesystem boost-uuid libogg libvorbis zlib opengl libzip openal-soft bzip2
+          boost-process openssl physfs
+        vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
+        vcpkgTriplet: x64-linux
+        vcpkgGitCommitId: 761c81d43335a5d5ccc2ec8ad90bd7e2cbba734e
+
+    - name: Build with CMake
+      uses: lukka/run-cmake@v3
+      with:
+        buildDirectory: ${{ runner.workspace }}/build
+        cmakeAppendedArgs: '-G Ninja -DCMAKE_BUILD_TYPE="Release" -DVERSION=${{github.run_number}}'
+        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+        useVcpkgToolchainFile: true
+
+    - name: Change name
+      run: |
+        mv '${{ runner.workspace }}/build/otclient' '${{ runner.workspace }}/build/otclient_linux'
+
+    - name: Upload otclient
+      uses: actions/upload-artifact@v2
+      with:
+        name: Download-binaries
+        path: |
+          ${{ runner.workspace }}/build/otclient_linux
+        if-no-files-found: error
