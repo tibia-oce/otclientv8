@@ -59,13 +59,13 @@ jobs:
     - name: Compile otclient_dx
       timeout-minutes: 20
       run: |
-        cd vc16
+        cd vc17
         MSBuild /property:Configuration=DirectX /p:BUILD_REVISION=${{github.run_number}}
         
     - name: Compile otclient_gl
       timeout-minutes: 20
       run: |
-        cd vc16
+        cd vc17
         MSBuild /property:Configuration=OpenGL /p:BUILD_REVISION=${{github.run_number}}
 
     - name: Upload binaries
