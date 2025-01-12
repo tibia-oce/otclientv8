@@ -1,0 +1,40 @@
+{
+  "branches": [
+    { "name": "master", "prerelease": false },
+    { "name": "develop", "prerelease": "rc" }
+  ],
+  "tagFormat": "v${version}",
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "writerOpts": {
+          "headerPartial": ""
+        }
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          {
+            "path": "client-windows-2022-windows-release/client.zip",
+            "name": "otclient-windows-v${version}.zip",
+            "label": "Windows Client"
+          },
+          {
+            "path": "client-ubuntu-22.04-linux-release/client.tar.gz",
+            "name": "otclient-linux-v${version}.tar.gz",
+            "label": "Linux Client"
+          },
+          {
+            "path": "client-macOS-14-macos-release/client.zip",
+            "name": "otclient-macos-v${version}.zip",
+            "label": "macOS Client"
+          }
+        ]
+      }
+    ]
+  ]
+}
