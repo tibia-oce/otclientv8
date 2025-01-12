@@ -1,5 +1,5 @@
 # Stage 1: Install system dependencies and vcpkg
-FROM ubuntu:22.04 AS dependencies
+FROM ubuntu:24.04 AS dependencies
 RUN export DEBIAN_FRONTEND=noninteractive \
 	&& ln -fs /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
 
@@ -32,7 +32,7 @@ RUN make -j$(nproc)
 
 
 # Stage 3: Create the final image
-FROM ubuntu:22.04 AS final
+FROM ubuntu:24.04 AS final
 RUN apt-get update; \
  	apt-get install -y \
 	libluajit-5.1-dev \
