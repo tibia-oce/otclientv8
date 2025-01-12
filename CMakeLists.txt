@@ -29,23 +29,6 @@ set(executable_SOURCES
     src/main.cpp
 )
 
-# In your main CMakeLists.txt before finding LibZip
-if(WIN32)
-    # Ensure ZLIB is found before LibZip
-    set(ZLIB_ROOT "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
-    find_package(ZLIB REQUIRED)
-    if(NOT ZLIB_FOUND)
-        message(FATAL_ERROR "ZLIB not found")
-    endif()
-
-    # Add ZLIB's DLL directory to the path (for Windows)
-    if(EXISTS "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin")
-        set(CMAKE_LIBRARY_PATH 
-            "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin"
-            ${CMAKE_LIBRARY_PATH})
-    endif()
-endif()
-
 # add executable icon for win32 platforms
 if(WIN32)
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/otcicon.o
