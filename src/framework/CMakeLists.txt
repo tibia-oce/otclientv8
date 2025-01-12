@@ -236,11 +236,6 @@ if(NOT WASM)
     set(Boost_USE_STATIC_LIBS ${USE_STATIC_LIBS})
     find_package(Boost 1.67.0 COMPONENTS ${REQUIRED_BOOST_COMPONENTS} REQUIRED)
 
-    #find zip
-    find_package(LibZip REQUIRED)
-    find_package(ZLIB REQUIRED)
-    find_package(BZip2 REQUIRED)
-
     #find lua
     if(LUAJIT)
         find_package(LuaJIT REQUIRED)
@@ -255,9 +250,11 @@ if(NOT WASM)
     endif()
     message(STATUS "LuaJIT: " ${LUAJIT})
 
-    find_package(PhysFS REQUIRED)
-    find_package(OpenSSL REQUIRED)
     find_package(ZLIB REQUIRED)
+    find_package(BZip2 REQUIRED)
+    find_package(OpenSSL REQUIRED)
+    find_package(LibZip REQUIRED)
+    find_package(PhysFS REQUIRED)
 
     set(framework_LIBRARIES ${framework_LIBRARIES}
         ${Boost_LIBRARIES}
@@ -595,4 +592,3 @@ endif()
 
 include_directories(${framework_INCLUDE_DIRS})
 add_definitions(${framework_DEFINITIONS})
-

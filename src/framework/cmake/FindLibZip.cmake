@@ -1,26 +1,25 @@
-find_package(PkgConfig)
-find_path(LIBZIP_INCLUDE_DIR
-    NAMES zip.h
-    PATHS
-    ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include
-    PATH_SUFFIXES libzip
-)
+# Try to find the libzip library
+#  LIBZIP_FOUND - system has libzip
+#  LIBZIP_INCLUDE_DIR_ZIP - the libzip include directory
+#  LIBZIP_INCLUDE_DIR_ZIPCONF - the libzip config include directory
+#  LIBZIP_LIBRARY - the libzip library
+#  LIBZIP_LIBRARIES - the libzip library and its dependencies
 
-find_library(LIBZIP_LIBRARY
-    NAMES zip libzip
-    PATHS
-    ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib
-)
+FIND_PATH(LIBZIP_INCLUDE_DIR_ZIP NAMES zip.h PATH_SUFFIXES libzip)
+FIND_PATH(LIBZIP_INCLUDE_DIR_ZIPCONF NAMES zipconf.h PATH_SUFFIXES libzip)
 
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(LibZip
-    REQUIRED_VARS LIBZIP_LIBRARY LIBZIP_INCLUDE_DIR
-)
+SET(_LIBZIP_STATIC_LIBS libzip.a)
+SET(_LIBZIP_SHARED_LIBS zip libzip)
 
-if(LibZip_FOUND AND NOT TARGET LibZip::LibZip)
-    add_library(LibZip::LibZip UNKNOWN IMPORTED)
-    set_target_properties(LibZip::LibZip PROPERTIES
-        IMPORTED_LOCATION "${LIBZIP_LIBRARY}"
-        INTERFACE_INCLUDE_DIRECTORIES "${LIBZIP_INCLUDE_DIR}"
-    )
-endif()
+IF(USE_STATIC_LIBS)
+    FIND_LIBRARY(LIBZIP_LIBRARY NAMES ${_LIBZIP_STATIC_LIBS} ${_LIBZIP_SHARED_LIBS})
+ELSE()
+    FIND_LIBRARY(LIBZIP_LIBRARY NAMES ${_LIBZIP_SHARED_LIBS} ${_LIBZIP_STATIC_LIBS})
+ENDIF()
+
+INCLUDE(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(LibZip DEFAULT_MSG 
+    LIBZIP_LIBRARY 
+    LIBZIP_INCLUDE_DIR_ZIP 
+    LIBZIP_INCLUDE_DIR_ZIPCONF)
+MARK_AS_ADVANCED(LIBZIP_LIBRARY LIBZIP_INCLUDE_DIR_ZIP LIBZIP_INCLUDE_DIR_ZIPCONF)
