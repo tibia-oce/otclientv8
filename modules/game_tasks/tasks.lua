@@ -54,19 +54,17 @@ function create()
   if tasksWindow then
     return
   end
-
-openTasksButton = modules.game_mainpanel.addToggleButton('openTasksButton', tr("Open Tasks Panel"), '/game_tasks/images/task_window', toggleTasksPanel, false, 4)
+  -- todo(tasks): buttons on/off fill is mis-sized?
+  openTasksButton = modules.client_topmenu.addRightGameToggleButton('openTasksButton', tr("Open Tasks Panel"), '/game_tasks/images/task_window', toggleTasksPanel)
   openTasksButton:setOn(false)
-  trackerButton = modules.game_mainpanel.addToggleButton('trackerButton', tr("Tasks Tracker"), '/game_tasks/images/active_tasks', toggleTracker, false, 4)
+  trackerButton = modules.client_topmenu.addRightGameToggleButton('trackerButton', tr("Tasks Tracker"), '/game_tasks/images/active_tasks', toggleTracker)
   trackerButton:setOn(true)
   trackerWindow = g_ui.loadUI("tasks_tracker", modules.game_interface.getRightPanel())
   trackerWindow.miniwindowScrollBar:mergeStyle({["$!on"] = {}})
   trackerWindow:setContentMinimumHeight(120)
   trackerWindow:setup()
-
   tasksWindow = g_ui.displayUI("tasks")
   tasksWindow:hide()
-
   tasksWindow.info.kills.bar.scroll.onValueChange = onKillsValueChange
 end
 
