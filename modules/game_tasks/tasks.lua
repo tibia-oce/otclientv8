@@ -55,9 +55,9 @@ function create()
     return
   end
   -- todo(tasks): buttons on/off fill is mis-sized?
-  openTasksButton = modules.client_topmenu.addRightGameToggleButton('openTasksButton', tr("Open Tasks Panel"), '/game_tasks/images/task_window', toggleTasksPanel)
+  openTasksButton = modules.client_topmenu.addRightGameToggleButton('openTasksButton', tr("Open Tasks Panel"), '/game_tasks/images/task_window', toggleTasksPanel, false, 4)
   openTasksButton:setOn(false)
-  trackerButton = modules.client_topmenu.addRightGameToggleButton('trackerButton', tr("Tasks Tracker"), '/game_tasks/images/active_tasks', toggleTracker)
+  trackerButton = modules.client_topmenu.addRightGameToggleButton('trackerButton', tr("Tasks Tracker"), '/game_tasks/images/active_tasks', toggleTracker, false, 4)
   trackerButton:setOn(true)
   trackerWindow = g_ui.loadUI("tasks_tracker", modules.game_interface.getRightPanel())
   trackerWindow.miniwindowScrollBar:mergeStyle({["$!on"] = {}})
