@@ -15,66 +15,136 @@
 # ******************************************************************************
 # Build Configuration
 # ******************************************************************************
-# Configure MSBuild path
-MSBUILD = "D:/Visual studio/2022 Community/MSBuild/Current/Bin/MSBuild.exe"
-
-# MSBuild options
+BUILD_TYPE ?= Release
+PREMAKE_VERSION ?= 5.0.0-beta2
+VCPKG_REPO ?= https://github.com/Microsoft/vcpkg.git
 MSBUILD_OPTIONS = /p:Configuration=Release \
                  /p:Platform=x64 \
                  /p:VcpkgEnabled=true \
                  /p:VcpkgEnableManifest=true \
                  /p:VcpkgManifestInstall=true \
                  /p:VcpkgConfiguration=Release
-
+ifeq ($(PLATFORM),WINDOWS)
+    DETECTED_MSBUILD := $(shell where MSBuild.exe 2>nul)
+    MSBUILD := $(if $(DETECTED_MSBUILD),$(DETECTED_MSBUILD),"D:/Visual studio/2022 Community/MSBuild/Current/Bin/MSBuild.exe")
+endif
+NPROC := $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
+JOBS ?= $(NPROC)
+MAKEFLAGS += -j$(JOBS)
+ifeq ($(PLATFORM),WINDOWS)
+    # Check if MSBUILD path exists
+    MSBUILD_CHECK := $(wildcard $(subst ",,$(MSBUILD)))
+    ifeq ($(MSBUILD_CHECK),)
+        $(error MSBuild not found at $(MSBUILD). 
+Please set the correct path to MSBuild.exe using: 
+  make MSBUILD="/path/to/MSBuild.exe"
+Or update the MSBUILD variable in the Makefile.
+Typical locations:
+  - "D:/Visual Studio/2022/Community/MSBuild/Current/Bin/MSBuild.exe"
+  - "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/MSBuild.exe"
+)
+    endif
+endif
 
 # ******************************************************************************
-# Platform Detection
+# Requirements validation
 # ******************************************************************************
 ifeq ($(OS),Windows_NT)
     PLATFORM := WINDOWS
 else
-    PLATFORM := $(shell uname -s | tr '[:lower:]' '[:upper:]')
+    UNAME_S := $(shell uname -s)
+    ifeq ($(UNAME_S),Linux)
+        PLATFORM := LINUX
+    endif
+    ifeq ($(UNAME_S),Darwin)
+        PLATFORM := MACOS
+    endif
 endif
+
+ifeq ($(PLATFORM),WINDOWS)
+    REQUIRED_TOOLS := git powershell
+else ifeq ($(PLATFORM),LINUX)
+    REQUIRED_TOOLS := git wget tar
+else ifeq ($(PLATFORM),MACOS)
+    REQUIRED_TOOLS := git wget tar
+else
+    REQUIRED_TOOLS :=
+endif
+
+K := $(foreach exec,$(REQUIRED_TOOLS),\
+    $(if $(shell which $(exec)),,$(error "Missing required tool for $(PLATFORM): $(exec)")))
 
 # ******************************************************************************
 # Default Targets
 # ******************************************************************************
+ifeq ($(PLATFORM),LINUX)
 all: setup build
 
-setup: vcpkg premake
+setup: vcpkg-linux premake-linux
 
-vcpkg:
-	@echo "VCPkg setup not implemented for this platform"
+vcpkg: vcpkg-linux
 
-premake:
-	@echo "Premake setup not implemented for this platform"
+premake: premake-linux
 
-build:
-	@echo "Build not implemented for this platform"
+build: build-linux
 
-debug:
-	@echo "Debug build not implemented for this platform"
+debug: debug-linux
 
-release:
-	@echo "Release build not implemented for this platform"
+release: release-linux
 
-clean:
-	@echo "Clean not implemented for this platform"
+clean: clean-linux
 
-rebuild: clean build
+rebuild: rebuild-linux
+
+else ifeq ($(PLATFORM),WINDOWS)
+all: setup build
+
+setup: vcpkg-windows premake-windows
+
+vcpkg: vcpkg-windows
+
+premake: premake-windows
+
+build: build-windows
+
+debug: debug-windows
+
+release: release-windows
+
+clean: clean-windows
+
+rebuild: rebuild-windows
+
+else ifeq ($(PLATFORM),MACOS)
+all: setup build
+
+setup: vcpkg-macos premake-macos
+
+vcpkg: vcpkg-macos
+
+premake: premake-macos
+
+build: build-macos
+
+debug: debug-macos
+
+release: release-macos
+
+clean: clean-macos
+
+rebuild: rebuild-macos
+
+else
+all:
+	@echo "Unsupported platform. Only Windows, Linux, and macOS are supported."
+
+setup vcpkg premake build debug release clean rebuild:
+	@echo "Unsupported platform. Only Windows, Linux, and macOS are supported."
+endif
 
 # ******************************************************************************
 # Windows Platform Targets
 # ******************************************************************************
-ifeq ($(PLATFORM),WINDOWS)
-setup: setup-windows
-build: build-windows
-debug: debug-windows
-release: release-windows
-rebuild: rebuild-windows
-clean: clean-windows
-endif
-
 setup-windows: vcpkg-windows premake-windows
 
 premake-windows:
@@ -139,15 +209,6 @@ clean-windows:
 # ******************************************************************************
 # Linux Platform Targets
 # ******************************************************************************
-ifeq ($(PLATFORM),LINUX)
-setup: setup-linux
-build: build-linux
-debug: debug-linux
-release: release-linux
-rebuild: rebuild-linux
-clean: clean-linux
-endif
-
 setup-linux: vcpkg-linux premake-linux
 
 vcpkg-linux:
@@ -174,15 +235,6 @@ rebuild-linux:
 # ******************************************************************************
 # macOS Platform Targets
 # ******************************************************************************
-ifeq ($(PLATFORM),DARWIN)
-setup: setup-macos
-build: build-macos
-debug: debug-macos
-release: release-macos
-rebuild: rebuild-macos
-clean: clean-macos
-endif
-
 setup-macos: vcpkg-macos premake-macos
 
 vcpkg-macos:
@@ -205,3 +257,35 @@ clean-macos:
 
 rebuild-macos:
 	@echo "Rebuilding for macOS (Not Implemented)"
+
+# ******************************************************************************
+# Utility Targets
+# ******************************************************************************
+help:
+	@echo ""
+	@echo "======================="
+	@echo "OTClientV8 Build System"
+	@echo "======================="
+	@echo ""
+	@echo "Available targets:"
+	@echo "  all             Setup and build the project (default)"
+	@echo "  setup           Configure project dependencies"
+	@echo "  build           Compile the project"
+	@echo "  debug           Build in debug mode"
+	@echo "  clean           Remove build artifacts"
+	@echo "  rebuild         Clean and rebuild the project"
+	@echo "  help            Show this help message"
+	@echo "  update-deps     Update VCPkg and Premake"
+	@echo ""
+	@echo "Build Configuration:"
+	@echo "  BUILD_TYPE      $(BUILD_TYPE)"
+	@echo "  PLATFORM        $(PLATFORM)"
+	@echo "  Parallel Jobs   $(JOBS)"
+	@echo ""
+	@echo "Platform-specific targets can be used directly"
+	@echo "Supported platforms: Windows, Linux, macOS"
+	@echo ""
+
+update-deps:
+	@echo "Updating VCPkg and Premake dependencies..."
+	@cd vcpkg && git pull
