@@ -35,6 +35,8 @@ protected:
 
 };
 
+#ifdef CONSOLE_APPLICATION
 extern ConsoleApplication g_app;
+#endif
 
 #endif
