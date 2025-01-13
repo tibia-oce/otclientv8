@@ -1,7 +1,7 @@
 # ******************************************************************************
 # OTClientV8 Build System Makefile
 # ******************************************************************************
-.PHONY: all setup vcpkg premake build clean debug release rebuild \
+.PHONY: all setup vcpkg premake build clean debug release rebuild help \
         vcpkg-windows premake-windows build-windows \
         clean-windows debug-windows release-windows rebuild-windows \
         setup-windows \
@@ -13,44 +13,21 @@
         setup-macos
 
 # ******************************************************************************
-# Build Configuration
+# Global Configuration
 # ******************************************************************************
 BUILD_TYPE ?= Release
 PREMAKE_VERSION ?= 5.0.0-beta2
 VCPKG_REPO ?= https://github.com/Microsoft/vcpkg.git
-MSBUILD_OPTIONS = /p:Configuration=Release \
-                 /p:Platform=x64 \
-                 /p:VcpkgEnabled=true \
-                 /p:VcpkgEnableManifest=true \
-                 /p:VcpkgManifestInstall=true \
-                 /p:VcpkgConfiguration=Release
-ifeq ($(PLATFORM),WINDOWS)
-    DETECTED_MSBUILD := $(shell where MSBuild.exe 2>nul)
-    MSBUILD := $(if $(DETECTED_MSBUILD),$(DETECTED_MSBUILD),"D:/Visual studio/2022 Community/MSBuild/Current/Bin/MSBuild.exe")
-endif
 NPROC := $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 JOBS ?= $(NPROC)
 MAKEFLAGS += -j$(JOBS)
-ifeq ($(PLATFORM),WINDOWS)
-    # Check if MSBUILD path exists
-    MSBUILD_CHECK := $(wildcard $(subst ",,$(MSBUILD)))
-    ifeq ($(MSBUILD_CHECK),)
-        $(error MSBuild not found at $(MSBUILD). 
-Please set the correct path to MSBuild.exe using: 
-  make MSBUILD="/path/to/MSBuild.exe"
-Or update the MSBUILD variable in the Makefile.
-Typical locations:
-  - "D:/Visual Studio/2022/Community/MSBuild/Current/Bin/MSBuild.exe"
-  - "C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/MSBuild.exe"
-)
-    endif
-endif
 
 # ******************************************************************************
-# Requirements validation
+# Platform Detection
 # ******************************************************************************
 ifeq ($(OS),Windows_NT)
     PLATFORM := WINDOWS
+    SHELL = cmd.exe
 else
     UNAME_S := $(shell uname -s)
     ifeq ($(UNAME_S),Linux)
@@ -61,6 +38,20 @@ else
     endif
 endif
 
+# ******************************************************************************
+# Windows-Specific Configuration
+# ******************************************************************************
+MSBUILD = "D:/Visual studio/2022 Community/MSBuild/Current/Bin/MSBuild.exe"
+MSBUILD_OPTIONS = /p:Configuration=Release \
+                 /p:Platform=x64 \
+                 /p:VcpkgEnabled=true \
+                 /p:VcpkgEnableManifest=true \
+                 /p:VcpkgManifestInstall=true \
+                 /p:VcpkgConfiguration=Release
+
+# ******************************************************************************
+# Required Tools Validation
+# ******************************************************************************
 ifeq ($(PLATFORM),WINDOWS)
     REQUIRED_TOOLS := git powershell
 else ifeq ($(PLATFORM),LINUX)
@@ -77,61 +68,43 @@ K := $(foreach exec,$(REQUIRED_TOOLS),\
 # ******************************************************************************
 # Default Targets
 # ******************************************************************************
-ifeq ($(PLATFORM),LINUX)
-all: setup build
-
-setup: vcpkg-linux premake-linux
-
-vcpkg: vcpkg-linux
-
-premake: premake-linux
-
-build: build-linux
-
-debug: debug-linux
-
-release: release-linux
-
-clean: clean-linux
-
-rebuild: rebuild-linux
-
-else ifeq ($(PLATFORM),WINDOWS)
-all: setup build
+ifeq ($(PLATFORM),WINDOWS)
+all: setup build-windows
 
 setup: vcpkg-windows premake-windows
 
 vcpkg: vcpkg-windows
-
 premake: premake-windows
-
 build: build-windows
-
 debug: debug-windows
-
 release: release-windows
-
 clean: clean-windows
-
 rebuild: rebuild-windows
 
+else ifeq ($(PLATFORM),LINUX)
+all: setup build-linux
+
+setup: vcpkg-linux premake-linux
+
+vcpkg: vcpkg-linux
+premake: premake-linux
+build: build-linux
+debug: debug-linux
+release: release-linux
+clean: clean-linux
+rebuild: rebuild-linux
+
 else ifeq ($(PLATFORM),MACOS)
-all: setup build
+all: setup build-macos
 
 setup: vcpkg-macos premake-macos
 
 vcpkg: vcpkg-macos
-
 premake: premake-macos
-
 build: build-macos
-
 debug: debug-macos
-
 release: release-macos
-
 clean: clean-macos
-
 rebuild: rebuild-macos
 
 else
@@ -147,8 +120,27 @@ endif
 # ******************************************************************************
 setup-windows: vcpkg-windows premake-windows
 
+vcpkg-windows:
+	@echo "Configuring VCPkg..."
+	@powershell -Command "& { \
+		if (-not (Test-Path 'vcpkg')) { \
+			try { \
+				git clone https://github.com/Microsoft/vcpkg.git; \
+				Set-Location vcpkg; \
+				./bootstrap-vcpkg.bat; \
+				Write-Host 'VCPkg installed successfully' \
+			} catch { \
+				Write-Host 'Failed to install VCPkg: $_'; \
+				exit 1 \
+			} \
+		} else { \
+			Write-Host 'VCPkg already exists' \
+		} \
+	}"
+	@vcpkg/vcpkg.exe install --triplet x64-windows
+
 premake-windows:
-	@echo Downloading Premake...
+	@echo "Downloading Premake..."
 	@powershell -Command "& { \
 		if (-not (Test-Path 'tools')) { \
 			New-Item -ItemType Directory -Path 'tools' | Out-Null \
@@ -168,35 +160,24 @@ premake-windows:
 		} \
 	}"
 
-vcpkg-windows:
-	@echo Configuring VCPkg...
-	@powershell -Command "& { \
-		if (-not (Test-Path 'vcpkg')) { \
-			try { \
-				git clone https://github.com/Microsoft/vcpkg.git; \
-				Set-Location vcpkg; \
-				./bootstrap-vcpkg.bat; \
-				Write-Host 'VCPkg installed successfully' \
-			} catch { \
-				Write-Host 'Failed to install VCPkg: $_'; \
-				exit 1 \
-			} \
-		} else { \
-			Write-Host 'VCPkg already exists' \
-		} \
-	}"
-	@vcpkg/vcpkg.exe install --triplet x64-windows
-
 build-windows:
-	@echo Generating project files...
+	@echo "Generating project files..."
 	@tools/premake5.exe vs2022
-	@echo Building project...
-	@$(MSBUILD) build/otclient.sln $(MSBUILD_OPTIONS)
+	@echo "Building project..."
+	@echo "Using MSBuild: $(MSBUILD)"
+	@if not exist build/otclient.sln ( \
+		echo "Solution file not found in build folder." && \
+		exit 1 \
+	)
+	@$(MSBUILD) build/otclient.sln $(MSBUILD_OPTIONS) || ( \
+		echo "Build failed" && \
+		exit 1 \
+	)
 
 debug-windows:
-	@echo Generating project files for Debug...
+	@echo "Generating project files for Debug..."
 	@tools/premake5.exe vs2022
-	@echo Building project in Debug mode...
+	@echo "Building project in Debug mode..."
 	@$(MSBUILD) build/otclient.sln $(MSBUILD_OPTIONS) /p:Configuration=Debug
 
 release-windows: build-windows
@@ -212,25 +193,42 @@ clean-windows:
 setup-linux: vcpkg-linux premake-linux
 
 vcpkg-linux:
-	@echo "Configuring VCPkg for Linux (Not Implemented)"
+	@echo "Configuring VCPkg for Linux..."
+	@if [ ! -d vcpkg ]; then \
+		git clone $(VCPKG_REPO); \
+		cd vcpkg; \
+		./bootstrap-vcpkg.sh; \
+	fi
+	@vcpkg/vcpkg install --triplet x64-linux
 
 premake-linux:
-	@echo "Downloading Premake for Linux (Not Implemented)"
+	@echo "Downloading Premake for Linux..."
+	@mkdir -p tools
+	@if [ ! -f tools/premake5 ]; then \
+		wget -O tools/premake.tar.gz "https://github.com/premake/premake-core/releases/download/v$(PREMAKE_VERSION)/premake-$(PREMAKE_VERSION)-linux.tar.gz"; \
+		tar -xzvf tools/premake.tar.gz -C tools; \
+		rm tools/premake.tar.gz; \
+		chmod +x tools/premake5; \
+	fi
 
 build-linux:
-	@echo "Building for Linux (Not Implemented)"
+	@echo "Generating project files..."
+	@tools/premake5 gmake2
+	@echo "Building project..."
+	@$(MAKE) -C build config=release
 
 debug-linux:
-	@echo "Debug build for Linux (Not Implemented)"
+	@echo "Generating project files for Debug..."
+	@tools/premake5 gmake2
+	@echo "Building project in Debug mode..."
+	@$(MAKE) -C build config=debug
 
-release-linux:
-	@echo "Release build for Linux (Not Implemented)"
+release-linux: build-linux
+
+rebuild-linux: clean-linux build-linux
 
 clean-linux:
-	@echo "Cleaning Linux build (Not Implemented)"
-
-rebuild-linux:
-	@echo "Rebuilding for Linux (Not Implemented)"
+	@rm -rf build tools vcpkg_installed
 
 # ******************************************************************************
 # macOS Platform Targets
@@ -238,53 +236,70 @@ rebuild-linux:
 setup-macos: vcpkg-macos premake-macos
 
 vcpkg-macos:
-	@echo "Configuring VCPkg for macOS (Not Implemented)"
+	@echo "Configuring VCPkg for macOS..."
+	@if [ ! -d vcpkg ]; then \
+		git clone $(VCPKG_REPO); \
+		cd vcpkg; \
+		./bootstrap-vcpkg.sh; \
+	fi
+	@vcpkg/vcpkg install --triplet x64-macos
 
 premake-macos:
-	@echo "Downloading Premake for macOS (Not Implemented)"
+	@echo "Downloading Premake for macOS..."
+	@mkdir -p tools
+	@if [ ! -f tools/premake5 ]; then \
+		wget -O tools/premake.tar.gz "https://github.com/premake/premake-core/releases/download/v$(PREMAKE_VERSION)/premake-$(PREMAKE_VERSION)-macos.tar.gz"; \
+		tar -xzvf tools/premake.tar.gz -C tools; \
+		rm tools/premake.tar.gz; \
+		chmod +x tools/premake5; \
+	fi
 
 build-macos:
-	@echo "Building for macOS (Not Implemented)"
+	@echo "Generating project files..."
+	@tools/premake5 gmake2
+	@echo "Building project..."
+	@$(MAKE) -C build config=release
 
 debug-macos:
-	@echo "Debug build for macOS (Not Implemented)"
+	@echo "Generating project files for Debug..."
+	@tools/premake5 gmake2
+	@echo "Building project in Debug mode..."
+	@$(MAKE) -C build config=debug
 
-release-macos:
-	@echo "Release build for macOS (Not Implemented)"
+release-macos: build-macos
+
+rebuild-macos: clean-macos build-macos
 
 clean-macos:
-	@echo "Cleaning macOS build (Not Implemented)"
-
-rebuild-macos:
-	@echo "Rebuilding for macOS (Not Implemented)"
+	@rm -rf build tools vcpkg_installed
 
 # ******************************************************************************
 # Utility Targets
 # ******************************************************************************
 help:
-	@echo ""
-	@echo "======================="
-	@echo "OTClientV8 Build System"
-	@echo "======================="
-	@echo ""
-	@echo "Available targets:"
-	@echo "  all             Setup and build the project (default)"
-	@echo "  setup           Configure project dependencies"
-	@echo "  build           Compile the project"
-	@echo "  debug           Build in debug mode"
-	@echo "  clean           Remove build artifacts"
-	@echo "  rebuild         Clean and rebuild the project"
-	@echo "  help            Show this help message"
-	@echo "  update-deps     Update VCPkg and Premake"
-	@echo ""
-	@echo "Build Configuration:"
-	@echo "  BUILD_TYPE      $(BUILD_TYPE)"
-	@echo "  PLATFORM        $(PLATFORM)"
-	@echo "  Parallel Jobs   $(JOBS)"
-	@echo ""
-	@echo "Platform-specific targets can be used directly"
-	@echo "Supported platforms: Windows, Linux, macOS"
-	@echo ""
+	@echo.
+	@echo =======================
+	@echo OTClientV8 Build System
+	@echo =======================
+	@echo.
+	@echo Available targets:
+	@echo   all             Setup and build the project (default)
+	@echo   setup           Configure project dependencies
+	@echo   build           Compile the project
+	@echo   debug           Build in debug mode
+	@echo   clean           Remove build artifacts
+	@echo   rebuild         Clean and rebuild the project
+	@echo   help            Show this help message
+	@echo   update-deps     Update VCPkg and Premake
+	@echo.
+	@echo Build Configuration:
+	@echo   BUILD_TYPE      $(BUILD_TYPE)
+	@echo   PLATFORM        $(PLATFORM)
+	@echo   Parallel Jobs   $(JOBS)
+	@echo.
+	@echo Platform-specific targets can be used directly
+	@echo Supported platforms: Windows, Linux, macOS
+	@echo.
 
 update-deps:
 	@echo "Updating VCPkg and Premake dependencies..."
