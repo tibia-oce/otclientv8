@@ -70,10 +70,8 @@ K := $(foreach exec,$(REQUIRED_TOOLS),\
 # Default Targets
 # ******************************************************************************
 ifeq ($(PLATFORM),WINDOWS)
-all: setup build-windows
-
+all: setup build copy
 setup: vcpkg-windows premake-windows
-
 vcpkg: vcpkg-windows
 premake: premake-windows
 build: build-windows
@@ -81,12 +79,11 @@ debug: debug-windows
 release: release-windows
 clean: clean-windows
 rebuild: rebuild-windows
+copy: copy-windows-binaries
 
 else ifeq ($(PLATFORM),LINUX)
-all: setup build-linux
-
+all: setup build copy
 setup: vcpkg-linux premake-linux
-
 vcpkg: vcpkg-linux
 premake: premake-linux
 build: build-linux
@@ -94,12 +91,11 @@ debug: debug-linux
 release: release-linux
 clean: clean-linux
 rebuild: rebuild-linux
+copy: copy-linux-binaries
 
 else ifeq ($(PLATFORM),MACOS)
 all: setup build-macos
-
 setup: vcpkg-macos premake-macos
-
 vcpkg: vcpkg-macos
 premake: premake-macos
 build: build-macos
@@ -109,8 +105,7 @@ clean: clean-macos
 rebuild: rebuild-macos
 
 else
-all:
-	@echo "Unsupported platform. Only Windows, Linux, and macOS are supported."
+all: @echo "Unsupported platform. Only Windows, Linux, and macOS are supported."
 
 setup vcpkg premake build debug release clean rebuild:
 	@echo "Unsupported platform. Only Windows, Linux, and macOS are supported."
@@ -161,7 +156,7 @@ premake-windows:
 		} \
 	}"
 
-build-windows: premake-windows
+build-windows: setup-windows
 	@echo "Generating project files..."
 	@tools/premake5.exe vs2022
 	@echo "Building project..."
@@ -175,15 +170,19 @@ build-windows: premake-windows
 		exit 1 \
 	)
 
-debug-windows:
+debug-windows: setup
 	@echo "Generating project files for Debug..."
 	@tools/premake5.exe vs2022
 	@echo "Building project in Debug mode..."
 	@$(MSBUILD) build/otclient.sln $(MSBUILD_OPTIONS) /p:Configuration=Debug
 
-release-windows: build-windows
+copy-windows-binaries: build-windows
+	@echo "Moving built files to root directory..."
+	@powershell -Command "Copy-Item 'build\bin\Release\*.dll','build\bin\Release\otclient.exe' -Destination '.' -Force -ErrorAction SilentlyContinue; exit 0"
 
-rebuild-windows: clean-windows build-windows
+release-windows: build-windows copy-windows-binaries
+
+rebuild-windows: clean-windows release-windows
 
 clean-windows:
 	@powershell -Command "Remove-Item -Recurse -Force -ErrorAction SilentlyContinue build,tools,vcpkg_installed; Remove-Item -Force -ErrorAction SilentlyContinue *.dll,otclient.exe; exit 0"
@@ -224,7 +223,7 @@ vcpkg-linux:
 	fi
 	@vcpkg/vcpkg install --triplet x64-linux
 
-premake-linux:
+premake-linux: linux-check-dependencies
 	@echo "Downloading Premake for Linux..."
 	@mkdir -p tools
 	@if [ ! -f tools/premake5 ]; then \
@@ -249,12 +248,18 @@ debug-linux:
 	@echo "Building project in Debug mode..."
 	@$(MAKE) -C build config=debug
 
+copy-linux-binaries: setup-linux
+	@echo "Moving built files to root directory..."
+	@cp -f build/bin/Release/otclient ./otclient
+	@chmod +x ./otclient
+	@cp -f build/bin/Release/*.so ./ 2>/dev/null || true
+
 release-linux: build-linux
 
 rebuild-linux: clean-linux build-linux
 
 clean-linux:
-	@rm -rf build tools vcpkg_installed
+	@rm -rf build tools vcpkg_installed otclient otclientv8.log packet.log crash_report.log
 
 # ******************************************************************************
 # macOS Platform Targets
