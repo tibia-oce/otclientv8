@@ -21,6 +21,7 @@ VCPKG_REPO ?= https://github.com/Microsoft/vcpkg.git
 NPROC := $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 JOBS ?= $(NPROC)
 MAKEFLAGS += -j$(JOBS)
+REQUIRED_LIBS := libluajit-5.1-dev freeglut3-dev libasound2-dev libgl-dev libgl1-mesa-dev libglu1-mesa-dev libglew-dev libx11-dev libxi-dev libxmu-dev mesa-common-dev xorg-dev
 
 # ******************************************************************************
 # Platform Detection
@@ -190,7 +191,29 @@ clean-windows:
 # ******************************************************************************
 # Linux Platform Targets
 # ******************************************************************************
-setup-linux: vcpkg-linux premake-linux
+setup-linux: linux-check-dependencies vcpkg-linux premake-linux
+
+linux-check-dependencies:
+ifeq ($(PLATFORM),LINUX)
+	@echo "Checking required libraries..."
+	@missing_libs=""
+	@for lib in $(REQUIRED_LIBS); do \
+		if ! dpkg-query -W -f='$${Status}' $$lib 2>/dev/null | grep -q "ok installed"; then \
+			missing_libs="$$missing_libs $$lib"; \
+		fi; \
+	done
+	@if [ ! -z "$$missing_libs" ]; then \
+		echo "Warning: The following required libraries are missing:"; \
+		echo "$$missing_libs"; \
+		echo ""; \
+		echo "You may need to install these libraries using the following command:"; \
+		echo "sudo apt-get install$$missing_libs"; \
+		echo ""; \
+		echo "Continuing with the build process, but it may fail if dependencies are missing."; \
+	else \
+		echo "All required libraries are installed. Proceeding with the build..."; \
+	fi
+endif
 
 vcpkg-linux:
 	@echo "Configuring VCPkg for Linux..."
@@ -276,6 +299,11 @@ clean-macos:
 # ******************************************************************************
 # Utility Targets
 # ******************************************************************************
+update-deps:
+	@echo "Updating VCPkg and Premake dependencies..."
+	@cd vcpkg && git pull
+
+ifeq ($(PLATFORM),WINDOWS)
 help:
 	@echo.
 	@echo =======================
@@ -300,7 +328,29 @@ help:
 	@echo Platform-specific targets can be used directly
 	@echo Supported platforms: Windows, Linux, macOS
 	@echo.
-
-update-deps:
-	@echo "Updating VCPkg and Premake dependencies..."
-	@cd vcpkg && git pull
+else
+help:
+	@echo
+	@echo =======================
+	@echo OTClientV8 Build System
+	@echo =======================
+	@echo
+	@echo Available targets:
+	@echo   all             Setup and build the project
+	@echo   setup           Configure project dependencies
+	@echo   build           Compile the project
+	@echo   debug           Build in debug mode
+	@echo   clean           Remove build artifacts
+	@echo   rebuild         Clean and rebuild the project
+	@echo   help            Show this help message
+	@echo   update-deps     Update VCPkg and Premake
+	@echo
+	@echo Build Configuration:
+	@echo   BUILD_TYPE      $(BUILD_TYPE)
+	@echo   PLATFORM        $(PLATFORM)
+	@echo   Parallel Jobs   $(JOBS)
+	@echo
+	@echo Platform-specific targets can be used directly
+	@echo Supported platforms: Windows, Linux, macOS
+	@echo
+endif

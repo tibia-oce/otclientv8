@@ -29,6 +29,7 @@
 #include "container.h"
 #include "statictext.h"
 #include <framework/core/eventdispatcher.h>
+#include <framework/core/graphicalapplication.h>
 #include <framework/ui/uimanager.h>
 #include <framework/core/application.h>
 #include "luavaluecasts_client.h"

@@ -24,6 +24,7 @@
 #include <framework/core/resourcemanager.h>
 #include <framework/core/eventdispatcher.h>
 #include <framework/luaengine/luainterface.h>
+#include <framework/core/graphicalapplication.h>
 #include <framework/http/http.h>
 #include <framework/platform/crashhandler.h>
 #include <framework/platform/platformwindow.h>

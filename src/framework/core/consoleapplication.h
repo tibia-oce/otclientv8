@@ -21,8 +21,8 @@
  */
 
 
-#ifndef CONSOLEAPPLICATION_H
-#define CONSOLEAPPLICATION_H
+#ifndef CONSOLE_APPLICATION
+#define CONSOLE_APPLICATION
 
 #include "application.h"
 
@@ -35,8 +35,6 @@ protected:
 
 };
 
-#ifdef CONSOLE_APPLICATION
 extern ConsoleApplication g_app;
-#endif
 
 #endif
