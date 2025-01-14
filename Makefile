@@ -94,7 +94,7 @@ rebuild: rebuild-linux
 copy: copy-linux-binaries
 
 else ifeq ($(PLATFORM),MACOS)
-all: setup build-macos
+all: setup build copy
 setup: vcpkg-macos premake-macos
 vcpkg: vcpkg-macos
 premake: premake-macos
@@ -103,6 +103,7 @@ debug: debug-macos
 release: release-macos
 clean: clean-macos
 rebuild: rebuild-macos
+copy: copy-macos-binaries
 
 else
 all: @echo "Unsupported platform. Only Windows, Linux, and macOS are supported."
@@ -185,7 +186,8 @@ release-windows: build-windows copy-windows-binaries
 rebuild-windows: clean-windows release-windows
 
 clean-windows:
-	@powershell -Command "Remove-Item -Recurse -Force -ErrorAction SilentlyContinue build,tools,vcpkg_installed; Remove-Item -Force -ErrorAction SilentlyContinue *.dll,otclient.exe; exit 0"
+	@powershell -Command "Remove-Item -Recurse -Force build, tools, vcpkg_installed -ErrorAction SilentlyContinue; Remove-Item -Force otclient.exe, *.dll, otclientv8.log, packet.log, crash_report.log -ErrorAction SilentlyContinue; exit 0"
+	@powershell -Command "Remove-Item -Force otclient.exe, *.dll, otclientv8.log, packet.log, crash_report.log -ErrorAction SilentlyContinue; exit 0"
 
 # ******************************************************************************
 # Linux Platform Targets
@@ -262,47 +264,75 @@ clean-linux:
 	@rm -rf build tools vcpkg_installed otclient otclientv8.log packet.log crash_report.log
 
 # ******************************************************************************
-# macOS Platform Targets
+# MacOS Platform Targets
 # ******************************************************************************
-setup-macos: vcpkg-macos premake-macos
+setup-macos: macos-check-dependencies vcpkg-macos premake-macos
+macos-check-dependencies:
+ifeq ($(PLATFORM),MACOS)
+    @echo "Checking required libraries..."
+    @missing_libs=""
+    @for lib in $(REQUIRED_LIBS); do \
+        if ! brew list $$lib >/dev/null 2>&1; then \
+            missing_libs="$$missing_libs $$lib"; \
+        fi; \
+    done
+    @if [ ! -z "$$missing_libs" ]; then \
+        echo "Warning: The following required libraries are missing:"; \
+        echo "$$missing_libs"; \
+        echo ""; \
+        echo "You may need to install these libraries using the following command:"; \
+        echo "brew install$$missing_libs"; \
+        echo ""; \
+        echo "Continuing with the build process, but it may fail if dependencies are missing."; \
+    else \
+        echo "All required libraries are installed. Proceeding with the build..."; \
+    fi
+endif
 
 vcpkg-macos:
-	@echo "Configuring VCPkg for macOS..."
-	@if [ ! -d vcpkg ]; then \
-		git clone $(VCPKG_REPO); \
-		cd vcpkg; \
-		./bootstrap-vcpkg.sh; \
-	fi
-	@vcpkg/vcpkg install --triplet x64-macos
+	@echo "Configuring VCPkg for MacOS..."
+    @if [ ! -d vcpkg ]; then \
+        git clone $(VCPKG_REPO); \
+        cd vcpkg; \
+        ./bootstrap-vcpkg.sh; \
+    fi
+    @vcpkg/vcpkg install --triplet x64-osx
 
-premake-macos:
-	@echo "Downloading Premake for macOS..."
-	@mkdir -p tools
-	@if [ ! -f tools/premake5 ]; then \
-		wget -O tools/premake.tar.gz "https://github.com/premake/premake-core/releases/download/v$(PREMAKE_VERSION)/premake-$(PREMAKE_VERSION)-macos.tar.gz"; \
-		tar -xzvf tools/premake.tar.gz -C tools; \
-		rm tools/premake.tar.gz; \
-		chmod +x tools/premake5; \
-	fi
+premake-macos: macos-check-dependencies
+    @echo "Downloading Premake for MacOS..."
+    @mkdir -p tools
+    @if [ ! -f tools/premake5 ]; then \
+        wget --no-netrc -q --show-progress \
+            -O tools/premake.tar.gz \
+            "https://github.com/premake/premake-core/releases/download/v$(PREMAKE_VERSION)/premake-$(PREMAKE_VERSION)-macosx.tar.gz" && \
+        cd tools && \
+        tar -xzf premake.tar.gz && \
+        rm premake.tar.gz && \
+        chmod +x premake5; \
+    fi
 
-build-macos:
-	@echo "Generating project files..."
-	@tools/premake5 gmake2
-	@echo "Building project..."
-	@$(MAKE) -C build config=release
+build-macos: premake-macos
+    @echo "Generating project files..."
+    @./tools/premake5 gmake2
+    @echo "Building project..."
+    @$(MAKE) -C build config=release
 
 debug-macos:
-	@echo "Generating project files for Debug..."
-	@tools/premake5 gmake2
-	@echo "Building project in Debug mode..."
-	@$(MAKE) -C build config=debug
+    @echo "Generating project files for Debug..."
+    @tools/premake5 gmake2
+    @echo "Building project in Debug mode..."
+    @$(MAKE) -C build config=debug
+
+copy-macos-binaries: build-macos
+    @echo "Moving built files to root directory..."
+    @cp -f build/bin/Release/otclient ./otclient
+    @chmod +x ./otclient
+    @cp -f build/bin/Release/*.dylib ./ 2>/dev/null || true
 
 release-macos: build-macos
-
 rebuild-macos: clean-macos build-macos
-
 clean-macos:
-	@rm -rf build tools vcpkg_installed
+    @rm -rf build tools vcpkg_installed otclient otclientv8.log packet.log crash_report.log
 
 # ******************************************************************************
 # Utility Targets
@@ -326,7 +356,6 @@ help:
 	@echo   clean           Remove build artifacts
 	@echo   rebuild         Clean and rebuild the project
 	@echo   help            Show this help message
-	@echo   update-deps     Update VCPkg and Premake
 	@echo.
 	@echo Build Configuration:
 	@echo   BUILD_TYPE      $(BUILD_TYPE)
