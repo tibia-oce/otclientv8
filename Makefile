@@ -248,7 +248,7 @@ debug-linux:
 	@echo "Building project in Debug mode..."
 	@$(MAKE) -C build config=debug
 
-copy-linux-binaries: setup-linux
+copy-linux-binaries: build-linux
 	@echo "Moving built files to root directory..."
 	@cp -f build/bin/Release/otclient ./otclient
 	@chmod +x ./otclient
