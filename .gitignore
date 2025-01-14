@@ -135,3 +135,4 @@ _ReSharper*/
 tools/
 out/
 *.dll
+.DS_Store

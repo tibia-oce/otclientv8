@@ -94,7 +94,7 @@ rebuild: rebuild-linux
 copy: copy-linux-binaries
 
 else ifeq ($(PLATFORM),MACOS)
-all: setup build copy
+all: build copy
 setup: vcpkg-macos premake-macos
 vcpkg: vcpkg-macos
 premake: premake-macos
@@ -238,7 +238,7 @@ premake-linux: linux-check-dependencies
 		chmod +x premake5; \
 	fi
 
-build-linux: premake-linux
+build-linux: setup-linux
 	@echo "Generating project files..."
 	@./tools/premake5 gmake2
 	@echo "Building project..."
@@ -268,71 +268,72 @@ clean-linux:
 # ******************************************************************************
 setup-macos: macos-check-dependencies vcpkg-macos premake-macos
 macos-check-dependencies:
-ifeq ($(PLATFORM),MACOS)
-    @echo "Checking required libraries..."
-    @missing_libs=""
-    @for lib in $(REQUIRED_LIBS); do \
-        if ! brew list $$lib >/dev/null 2>&1; then \
-            missing_libs="$$missing_libs $$lib"; \
-        fi; \
-    done
-    @if [ ! -z "$$missing_libs" ]; then \
-        echo "Warning: The following required libraries are missing:"; \
-        echo "$$missing_libs"; \
-        echo ""; \
-        echo "You may need to install these libraries using the following command:"; \
-        echo "brew install$$missing_libs"; \
-        echo ""; \
-        echo "Continuing with the build process, but it may fail if dependencies are missing."; \
-    else \
-        echo "All required libraries are installed. Proceeding with the build..."; \
-    fi
-endif
+	@missing_libs=""
+	@for lib in $(REQUIRED_LIBS); do \
+		if ! brew list $$lib >/dev/null 2>&1; then \
+			missing_libs="$$missing_libs $$lib"; \
+		fi; \
+	done
+	@if [ ! -z "$$missing_libs" ]; then \
+		echo "Warning: The following required libraries are missing:"; \
+		echo "$$missing_libs"; \
+		echo ""; \
+		echo "You may need to install these libraries using the following command:"; \
+		echo "brew install$$missing_libs"; \
+		echo ""; \
+		echo "Continuing with the build process, but it may fail if dependencies are missing."; \
+	else \
+		echo "All required libraries are installed. Proceeding with the build..."; \
+	fi
 
 vcpkg-macos:
 	@echo "Configuring VCPkg for MacOS..."
-    @if [ ! -d vcpkg ]; then \
-        git clone $(VCPKG_REPO); \
-        cd vcpkg; \
-        ./bootstrap-vcpkg.sh; \
-    fi
-    @vcpkg/vcpkg install --triplet x64-osx
+	@if [ ! -d vcpkg ]; then \
+		git clone $(VCPKG_REPO); \
+		cd vcpkg; \
+		./bootstrap-vcpkg.sh; \
+	fi
+	@if [ "$$(uname -m)" = "arm64" ]; then \
+		vcpkg/vcpkg install --triplet arm64-osx; \
+	else \
+		vcpkg/vcpkg install --triplet x64-osx; \
+	fi
 
 premake-macos: macos-check-dependencies
-    @echo "Downloading Premake for MacOS..."
-    @mkdir -p tools
-    @if [ ! -f tools/premake5 ]; then \
-        wget --no-netrc -q --show-progress \
-            -O tools/premake.tar.gz \
-            "https://github.com/premake/premake-core/releases/download/v$(PREMAKE_VERSION)/premake-$(PREMAKE_VERSION)-macosx.tar.gz" && \
-        cd tools && \
-        tar -xzf premake.tar.gz && \
-        rm premake.tar.gz && \
-        chmod +x premake5; \
-    fi
+	@echo "Downloading Premake for MacOS..."
+	@mkdir -p tools
+	@if [ ! -f tools/premake5 ]; then \
+		wget --no-netrc -q --show-progress \
+			-O tools/premake.tar.gz \
+			"https://github.com/premake/premake-core/releases/download/v$(PREMAKE_VERSION)/premake-$(PREMAKE_VERSION)-macosx.tar.gz" && \
+		cd tools && \
+		tar -xzf premake.tar.gz && \
+		rm premake.tar.gz && \
+		chmod +x premake5; \
+	fi
 
-build-macos: premake-macos
-    @echo "Generating project files..."
-    @./tools/premake5 gmake2
-    @echo "Building project..."
-    @$(MAKE) -C build config=release
+build-macos: setup-macos
+	@echo "Generating project files..."
+	@./tools/premake5 gmake2
+	@echo "Building project..."
+	@$(MAKE) -C build config=release
 
-debug-macos:
-    @echo "Generating project files for Debug..."
-    @tools/premake5 gmake2
-    @echo "Building project in Debug mode..."
-    @$(MAKE) -C build config=debug
+debug-macos: setup-macos
+	@echo "Generating project files for Debug..."
+	@tools/premake5 gmake2
+	@echo "Building project in Debug mode..."
+	@$(MAKE) -C build config=debug
 
 copy-macos-binaries: build-macos
-    @echo "Moving built files to root directory..."
-    @cp -f build/bin/Release/otclient ./otclient
-    @chmod +x ./otclient
-    @cp -f build/bin/Release/*.dylib ./ 2>/dev/null || true
+	@echo "Moving built files to root directory..."
+	@cp -f build/bin/Release/otclient ./otclient
+	@chmod +x ./otclient
+	@cp -f build/bin/Release/*.dylib ./ 2>/dev/null || true
 
 release-macos: build-macos
 rebuild-macos: clean-macos build-macos
 clean-macos:
-    @rm -rf build tools vcpkg_installed otclient otclientv8.log packet.log crash_report.log
+	@rm -rf build tools vcpkg_installed otclient otclientv8.log packet.log crash_report.log
 
 # ******************************************************************************
 # Utility Targets

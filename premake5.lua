@@ -47,9 +47,14 @@ workspace "otclient"
    elseif os.target() == "linux" then
        pkgIncludes = pkgDirectory .. "/x64-linux/include"
        pkgLibs = pkgDirectory .. "/x64-linux/lib"
-   elseif os.target() == "macosx" then
-       pkgIncludes = pkgDirectory .. "/x64-macos/include"
-       pkgLibs = pkgDirectory .. "/x64-macos/lib"
+    elseif os.target() == "macosx" then
+        if os.host() == "macosx" and os.getenv("HOSTTYPE") == "arm64" then
+            pkgIncludes = pkgDirectory .. "/arm64-osx/include"
+            pkgLibs = pkgDirectory .. "/arm64-osx/lib"
+        else
+            pkgIncludes = pkgDirectory .. "/x64-osx/include"
+            pkgLibs = pkgDirectory .. "/x64-osx/lib"
+        end
    else
        error("Unsupported platform: " .. os.target())
    end
@@ -68,13 +73,73 @@ workspace "otclient"
            "luajit-5.1"
        }
 
-   filter "system:macosx" 
-       if _OPTIONS["use-static-libs"] then
-           links {
-               "Foundation.framework",
-               "IOKit.framework"
-           }
-       end
+    filter "system:macosx"
+        linkoptions { 
+            "-pagezero_size 10000",
+            "-image_base 100000000",
+        }
+       defines { 
+           "PLATFORM_MACOS",
+           "GL_SILENCE_DEPRECATION",
+           "USE_UNSIGNED_LONG_CONVERSION",
+           "DEBUG_PLATFORM",
+           "DEBUG_GRAPHICS",
+           "DEBUG_GL"
+       }
+       
+       includedirs {
+           pkgIncludes,
+           pkgIncludes .. "/arm64-osx/lib",
+           pkgDirectory .. "/arm64-osx/include",
+           pkgDirectory .. "/arm64-osx/include/luajit-2.1",
+           "/usr/local/include",
+           "/opt/X11/include"
+       }
+       
+       libdirs { 
+           pkgLibs,
+           pkgDirectory .. "/arm64-osx/lib",
+           "/usr/local/lib",
+           "/opt/X11/lib"
+       }
+       
+       links {
+           "boost_system",
+           "boost_filesystem",
+           "boost_iostreams",
+           "boost_program_options",
+           "boost_process",
+           "boost_random",
+           "boost_regex",
+           "boost_atomic",
+           "crypto",
+           "ssl",
+           "physfs",
+           "GLEW",
+           "openal",
+           "luajit-5.1",
+           "zip",
+           "z",
+           "bz2",
+           "ogg",
+           "vorbis",
+           "vorbisfile",
+           "vorbisenc",
+           "X11",
+            "Xrandr",
+            "Xinerama",  -- Add these X11-specific libraries
+            "Xcursor",
+            "Xext",
+            "GL",
+           "OpenGL.framework",
+           "Cocoa.framework",
+           "Foundation.framework",
+           "CoreFoundation.framework",
+           "IOKit.framework",
+           "CoreVideo.framework"
+       }
+   
+
 
    if not os.target() == "macosx" and not _OPTIONS["wasm"] then
        if _OPTIONS["crash-handler"] then
@@ -103,36 +168,50 @@ project "framework"
    libdirs { pkgLibs }
 
    files {
-       "src/framework/const.h",
-       "src/framework/global.h",
-       "src/framework/pch.h",
-       "src/framework/luafunctions.cpp",
-       "src/framework/otml/**.cpp",
-       "src/framework/otml/**.h",
-       "src/framework/xml/**.cpp",
-       "src/framework/xml/**.h",
-       "src/framework/util/**.cpp",
-       "src/framework/util/**.c",
-       "src/framework/util/**.h",
-       "src/framework/stdext/**.cpp",
-       "src/framework/stdext/**.h",
-       "src/framework/core/**.cpp",
-       "src/framework/core/**.h",
-       "src/framework/luaengine/**.cpp",
-       "src/framework/luaengine/**.h",
-       "src/framework/net/**.cpp",
-       "src/framework/net/**.h",
-       "src/framework/http/**.cpp",
-       "src/framework/http/**.h",
-       "src/framework/proxy/**.cpp",
-       "src/framework/proxy/**.h",
-       "src/framework/protocol/**.cpp",
-       "src/framework/protocol/**.h",
-       "src/framework/platform/**.cpp",
-       "src/framework/platform/**.h",
-       "src/framework/util/crypt.*",
-       "src/framework/core/resourcemanager.*"
-   }
+        "src/framework/const.h",
+        "src/framework/global.h",
+        "src/framework/pch.h",
+        "src/framework/luafunctions.cpp",
+        "src/framework/otml/**.cpp",
+        "src/framework/otml/**.h",
+        "src/framework/xml/**.cpp",
+        "src/framework/xml/**.h",
+        "src/framework/util/**.cpp",
+        "src/framework/util/**.c",
+        "src/framework/util/**.h",
+        "src/framework/stdext/**.cpp",
+        "src/framework/stdext/**.h",
+        "src/framework/core/**.cpp",
+        "src/framework/core/**.h",
+        "src/framework/luaengine/**.cpp",
+        "src/framework/luaengine/**.h",
+        "src/framework/net/**.cpp",
+        "src/framework/net/**.h",
+        "src/framework/http/**.cpp",
+        "src/framework/http/**.h",
+        "src/framework/proxy/**.cpp",
+        "src/framework/proxy/**.h",
+        "src/framework/protocol/**.cpp",
+        "src/framework/protocol/**.h"
+    }
+
+    -- Platform-specific files
+    filter "system:macosx"
+        files {
+            "src/framework/platform/platform.cpp",
+            "src/framework/platform/platform.h",
+            "src/framework/platform/platformwindow.cpp",
+            "src/framework/platform/platformwindow.h",
+            "src/framework/platform/x11window.*",
+            "src/framework/platform/unixplatform.*",
+            "src/framework/platform/unixcrashhandler.*"
+        }
+
+    filter "system:not macosx"
+        files {
+            "src/framework/platform/**"
+        }
+
 
    filter { "options:framework-graphics=true" }
        files {
@@ -187,9 +266,12 @@ project "framework"
        }
        buildoptions { "/bigobj" }
 
-   filter { "options:use-luajit=true" }
+    filter { "options:use-luajit=true" }
        defines { "USE_LUAJIT" }
-       includedirs { "/usr/include/luajit-2.1" }
+       includedirs { 
+           "/usr/include/luajit-2.1",
+           pkgIncludes .. "/luajit-2.1"
+       }
 
    filter { "options:use-luajit=false" }
        includedirs { "/usr/include/lua5.1" }
@@ -271,6 +353,15 @@ project "otclient"
            "-L" .. pkgLibs,
            "-L../vcpkg_installed/x64-linux/lib",
            "-Wl,--end-group"
+       }
+
+    filter "system:macosx"
+       kind "ConsoleApp"
+       targetextension ""
+       linkoptions { 
+           "-pagezero_size 10000",
+           "-image_base 100000000",
+           "-L/opt/X11/lib"
        }
 
    filter "configurations:Debug"
