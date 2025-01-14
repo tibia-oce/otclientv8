@@ -161,7 +161,7 @@ premake-windows:
 		} \
 	}"
 
-build-windows:
+build-windows: premake-windows
 	@echo "Generating project files..."
 	@tools/premake5.exe vs2022
 	@echo "Building project..."
@@ -186,7 +186,7 @@ release-windows: build-windows
 rebuild-windows: clean-windows build-windows
 
 clean-windows:
-	@powershell -Command "Remove-Item -Recurse -Force -ErrorAction SilentlyContinue build,tools,vcpkg_installed"
+	@powershell -Command "Remove-Item -Recurse -Force -ErrorAction SilentlyContinue build,tools,vcpkg_installed; Remove-Item -Force -ErrorAction SilentlyContinue *.dll,otclient.exe; exit 0"
 
 # ******************************************************************************
 # Linux Platform Targets
@@ -228,15 +228,18 @@ premake-linux:
 	@echo "Downloading Premake for Linux..."
 	@mkdir -p tools
 	@if [ ! -f tools/premake5 ]; then \
-		wget -O tools/premake.tar.gz "https://github.com/premake/premake-core/releases/download/v$(PREMAKE_VERSION)/premake-$(PREMAKE_VERSION)-linux.tar.gz"; \
-		tar -xzvf tools/premake.tar.gz -C tools; \
-		rm tools/premake.tar.gz; \
-		chmod +x tools/premake5; \
+		wget --no-netrc -q --show-progress \
+			-O tools/premake.tar.gz \
+			"https://github.com/premake/premake-core/releases/download/v$(PREMAKE_VERSION)/premake-$(PREMAKE_VERSION)-linux.tar.gz" && \
+		cd tools && \
+		tar -xzf premake.tar.gz && \
+		rm premake.tar.gz && \
+		chmod +x premake5; \
 	fi
 
-build-linux:
+build-linux: premake-linux
 	@echo "Generating project files..."
-	@tools/premake5 gmake2
+	@./tools/premake5 gmake2
 	@echo "Building project..."
 	@$(MAKE) -C build config=release
 
