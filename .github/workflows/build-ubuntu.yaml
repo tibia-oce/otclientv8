@@ -1,5 +1,4 @@
 name: "Build: Ubuntu"
-
 on:
   workflow_dispatch:
   pull_request:
@@ -17,7 +16,6 @@ on:
     branches:
       - master
       - develop
-      - feat/premake
     paths:
       - ".github/workflows/build-ubuntu.yaml"
       - "data/**"
@@ -89,9 +87,6 @@ jobs:
         vcpkgGitCommitId: ${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}
         vcpkgJsonIgnores: "['**/vcpkg/**', '**/browser/overlay-ports/**']"
 
-    - name: Install vcpkg dependencies
-      run: |
-        vcpkg install --triplet x64-linux
 
     - name: Download and setup Premake
       run: |
