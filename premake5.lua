@@ -34,7 +34,21 @@ local function getLibraryPaths(basePath, boostLibs)
     -- If running in a GitHub Actions environment, include paths to the vcpkg-installed libraries.
     local github_path = os.getenv("GITHUB_WORKSPACE")
     if github_path then
-        table.insert(paths.extra, github_path .. "/vcpkg/installed/x64-linux/lib")
+        local platform = ""
+
+        -- Detect platform and set the correct vcpkg triplet
+        if os.target() == "windows" then
+            platform = "x64-windows"
+        elseif os.target() == "linux" then
+            platform = "x64-linux"
+        elseif os.target() == "macosx" then
+            platform = os.getenv("HOSTTYPE") == "arm64" and "arm64-osx" or "x64-osx"
+        else
+            error("Unsupported platform in GitHub Actions: " .. os.target())
+        end
+        -- Add the platform-specific lib directory
+        table.insert(paths.extra, github_path .. "/vcpkg/installed/" .. platform .. "/lib")
+        table.insert(paths.extra, github_path .. "/vcpkg_installed/" .. platform .. "/lib")
     end
 
     -- For each Boost library, search in the additional paths to verify it exists.
@@ -91,8 +105,20 @@ workspace "otclient"
             "iphlpapi", "mswsock", "bcrypt", "shlwapi", "psapi",
             "winmm", "glu32", "shell32", "OpenGL32", "glew32", "dbghelp"
         }
-        includedirs { pkgIncludes .. "/GL", pkgIncludes .. "/GLEW", pkgIncludes .. "/luajit" }
-        linkoptions { "/NODEFAULTLIB:imagehlp.lib", "/IGNORE:4006" } -- process multiple definitions without warnings
+        includedirs {
+            pkgIncludes,
+            pkgIncludes .. "/GL",
+            pkgIncludes .. "/GLEW",
+            pkgIncludes .. "/luajit",
+            pkgIncludes .. "/zlib",
+            pkgIncludes .. "/physfs",
+            pkgIncludes .. "/openssl"
+        }
+        linkoptions {
+            "/NODEFAULTLIB:imagehlp.lib",
+            "/IGNORE:4006", -- Suppress multiple definition warnings
+            "/LTCG" -- Enable link-time code generation for optimization
+        }
 
     filter "system:macosx"
         linkoptions { "-pagezero_size 10000", "-image_base 100000000", "-L/opt/X11/lib" }
