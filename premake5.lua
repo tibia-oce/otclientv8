@@ -1,5 +1,5 @@
 -- =============================================================================
--- Helper functions for path resolution
+-- Helper functions
 -- =============================================================================
 local function getPackagePaths()
     local platform = ""
@@ -54,7 +54,7 @@ local function getLibraryPaths(basePath, boostLibs)
 end
 
 -- =============================================================================
--- Global Configuration
+-- Global Workspace
 -- =============================================================================
 workspace "otclient"
     configurations { "Debug", "Release" }
@@ -80,26 +80,27 @@ workspace "otclient"
     includedirs { pkgIncludes }
     libdirs { libPaths.extra }
     links(libPaths.foundLibs)
-    links { "stdc++", "pthread", "dl", "m", "z", "zip", "bz2", "physfs", "ssl", "crypto" }
 
-    -- Platform-specific configurations
-    filter "system:linux"
-        buildoptions { "`pkg-config --cflags x11 gl luajit`", "-fPIC" }
-        linkoptions { "`pkg-config --libs x11 gl luajit`", "-Wl,--start-group", "-Wl,--end-group" }
-        links { "GL", "GLU", "GLEW", "X11", "Xrandr", "ogg", "vorbis", "openal", "luajit-5.1" }
-
+    -- Platform-specific Configuration
     filter "system:windows"
         systemversion "latest"
         buildoptions { "/bigobj" }
-        links { "gdi32", "ws2_32", "iphlpapi", "mswsock", "dbghelp", "bcrypt", "shlwapi", "psapi", "imagehlp", "winmm", "kernel32", "user32", "glu32", "shell32", "advapi32" }
+        defines { "PLATFORM_WINDOWS", "WIN32", "_WINDOWS", "NOMINMAX", "_WIN32_WINNT=0x0501" }
+        links {
+            "kernel32", "user32", "gdi32", "advapi32", "ws2_32",
+            "iphlpapi", "mswsock", "bcrypt", "shlwapi", "psapi",
+            "winmm", "glu32", "shell32", "OpenGL32", "glew32", "dbghelp"
+        }
+        includedirs { pkgIncludes .. "/GL", pkgIncludes .. "/GLEW", pkgIncludes .. "/luajit" }
+        linkoptions { "/NODEFAULTLIB:imagehlp.lib", "/IGNORE:4006" } -- process multiple definitions without warnings
 
     filter "system:macosx"
         linkoptions { "-pagezero_size 10000", "-image_base 100000000", "-L/opt/X11/lib" }
         includedirs { "/usr/local/include", "/opt/X11/include" }
         links { 
-            "GLEW", "openal", "luajit-5.1", "zip", "z", "bz2",
-            "ogg", "vorbis", "vorbisfile", "vorbisenc", "X11", "Xrandr",
-            "Xinerama", "Xcursor", "Xext", "GL", "OpenGL.framework",
+            "GLEW", "openal", "luajit-5.1", "zip", "z", "bz2", "ogg", 
+            "vorbis", "vorbisfile", "vorbisenc", "X11", "Xrandr", 
+            "Xinerama", "Xcursor", "Xext", "GL", "OpenGL.framework", 
             "Cocoa.framework", "Foundation.framework", "CoreFoundation.framework",
             "IOKit.framework", "CoreVideo.framework" 
         }
@@ -109,8 +110,17 @@ workspace "otclient"
             "DEBUG_GRAPHICS", "DEBUG_GL" 
         }
 
+    filter "system:linux"
+        buildoptions { "`pkg-config --cflags x11 gl luajit`", "-fPIC" }
+        linkoptions { "`pkg-config --libs x11 gl luajit`", "-Wl,--start-group", "-Wl,--end-group" }
+        links { 
+            "stdc++", "pthread", "dl", "m", "z", "zip", "bz2", "physfs", 
+            "ssl", "crypto", "GL", "GLU", "GLEW", "X11", "Xrandr", "ogg", 
+            "vorbis", "openal", "luajit-5.1" 
+        }
+
 -- =============================================================================
--- Framework Project
+-- Framework
 -- =============================================================================
 project "framework"
     kind "StaticLib"
@@ -220,28 +230,11 @@ project "framework"
             pkgLibs .. "/**"
         }
 
-    filter "system:windows"
-        systemversion "latest"
-        defines {
-            "WIN32",
-            "_WINDOWS",
-            "NOMINMAX",
-            "_WIN32_WINNT=0x0501"
-        }
-        buildoptions { "/bigobj" }
-
-    filter { "options:use-luajit=true" }
-        defines { "USE_LUAJIT" }
-        includedirs { 
-            "/usr/include/luajit-2.1",
-            pkgIncludes .. "/luajit-2.1"
-        }
-
     filter { "options:use-luajit=false" }
         includedirs { "/usr/include/lua5.1" }
 
 -- =============================================================================
--- Client Project
+-- Client
 -- =============================================================================
 project "otclient"
     kind "WindowedApp"
@@ -273,17 +266,9 @@ project "otclient"
     }
 
     filter "system:windows"
-        buildoptions { "/bigobj" }
         linkoptions { "/SUBSYSTEM:WINDOWS", "/ENTRY:mainCRTStartup" }
-        systemversion "latest"
         files { "src/otcicon.rc" }
-        defines {
-            "WIN32",
-            "_WINDOWS", 
-            "NOMINMAX",
-            "_WIN32_WINNT=0x0501",
-            "PLATFORM_WINDOWS"
-        }
+        defines { "OPENGL_GRAPHICS" }
 
     filter "system:linux"
         defines { "PLATFORM_LINUX" }
@@ -292,7 +277,6 @@ project "otclient"
             "-L" .. pkgLibs,
             "-Wl,--end-group"
         }
-
     filter "system:macosx"
         kind "ConsoleApp"
         targetextension ""
