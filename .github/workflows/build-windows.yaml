@@ -72,6 +72,7 @@ jobs:
       run: |
         echo "Installed libraries in vcpkg_installed:"
         ls -R $GITHUB_WORKSPACE/vcpkg_installed
+        ls -R $GITHUB_WORKSPACE/vcpkg/installed
       
     - name: Download and setup Premake
       run: |
