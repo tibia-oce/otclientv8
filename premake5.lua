@@ -40,7 +40,7 @@ workspace "otclient"
    }
 
    local pkgDirectory = os.getenv("GITHUB_WORKSPACE") and 
-    os.getenv("GITHUB_WORKSPACE") .. "/vcpkg/installed" or 
+    os.getenv("GITHUB_WORKSPACE") .. "/vcpkg_installed" or 
     "vcpkg_installed"
    local pkgIncludes, pkgLibs
    if os.target() == "windows" then
