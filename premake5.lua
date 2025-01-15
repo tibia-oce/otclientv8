@@ -159,12 +159,6 @@ workspace "otclient"
            "IOKit.framework",
            "CoreVideo.framework"
        }
-   
-    filter { "system:linux", "options:ci" }
-       defines { "CI_BUILD" }
-       includedirs {
-           os.getenv("GITHUB_WORKSPACE") and os.getenv("GITHUB_WORKSPACE") .. "/vcpkg/installed/x64-linux/include" or nil
-       }
 
    if not os.target() == "macosx" and not _OPTIONS["wasm"] then
        if _OPTIONS["crash-handler"] then

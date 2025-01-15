@@ -93,7 +93,7 @@ jobs:
 
     - name: Generate project files
       run: |
-        ./tools/premake5 --ci=true gmake2
+        ./tools/premake5 gmake2
 
     - name: VCPkg Linux
       run: |
