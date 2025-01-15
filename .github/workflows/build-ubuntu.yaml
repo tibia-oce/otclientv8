@@ -74,22 +74,25 @@ jobs:
       with:
         vcpkgGitCommitId: ${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}
         vcpkgJsonIgnores: "['**/vcpkg/**', '**/browser/overlay-ports/**']"
+        vcpkgDirectory: ${{ github.workspace }}/vcpkg
+        runVcpkgInstall: true
       env:
         VCPKG_DEFAULT_TRIPLET: x64-linux
+        VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
 
-    - name: Debug vcpkg install locations
+    - name: Verify vcpkg installation
       run: |
-        echo "Workspace content:"
-        ls -la $GITHUB_WORKSPACE
+        echo "Environment:"
+        env | grep VCPKG
         
-        echo "Searching for installed libraries:"
-        find $GITHUB_WORKSPACE -name "libboost_*"
-        find $GITHUB_WORKSPACE -name "*.so"
-        find $GITHUB_WORKSPACE -name "*.a"
+        echo "Library locations:"
+        find $GITHUB_WORKSPACE -name "boost" -type d
+        find $GITHUB_WORKSPACE/vcpkg_installed -type f || true
+        find $GITHUB_WORKSPACE/vcpkg/installed -type f || true
         
-        echo "Checking vcpkg directories:"
-        ls -R $GITHUB_WORKSPACE/vcpkg/installed || true
-        ls -R $GITHUB_WORKSPACE/vcpkg_installed || true
+        echo "Include directories:"
+        ls -la $GITHUB_WORKSPACE/vcpkg_installed/x64-linux/include || true
+        ls -la $GITHUB_WORKSPACE/vcpkg/installed/x64-linux/include || true
 
     - name: Download and setup Premake
       run: |
