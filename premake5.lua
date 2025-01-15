@@ -104,7 +104,7 @@ workspace "otclient"
             "kernel32", "user32", "gdi32", "advapi32", "ws2_32",
             "iphlpapi", "mswsock", "bcrypt", "shlwapi", "psapi",
             "winmm", "glu32", "shell32", "OpenGL32", "glew32", "dbghelp",
-            "ssl", "crypto"
+            "libssl", "libcrypto"  -- Correct library names
         }
         includedirs {
             pkgIncludes,
