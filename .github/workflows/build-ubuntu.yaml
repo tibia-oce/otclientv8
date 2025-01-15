@@ -92,19 +92,23 @@ jobs:
       run: |
         ./tools/premake5 gmake2
 
+    - name: VCPkg Linux
+      run: |
+        # Use the vcpkg in the repository
+        cd $GITHUB_WORKSPACE/vcpkg
+        ./bootstrap-vcpkg.sh
+        ./vcpkg install --triplet x64-linux
+    
     - name: Diagnose Library Issues
       run: |
         echo "VCPkg Installation Path:"
-        echo $VCPKG_INSTALLATION_ROOT
+        echo $GITHUB_WORKSPACE/vcpkg
     
         echo "Checking vcpkg-installed libraries:"
-        find $VCPKG_INSTALLATION_ROOT/installed/x64-linux/lib -name "*boost*"
+        find $GITHUB_WORKSPACE/vcpkg/installed/x64-linux/lib -name "*boost*"
     
-        echo "pkg-config library paths:"
-        pkg-config --libs boost
-    
-        echo "System library paths:"
-        ldconfig -p | grep boost
+          echo "Vcpkg root contents:"
+          ls $GITHUB_WORKSPACE/vcpkg
 
     - name: Build project
       run: |
