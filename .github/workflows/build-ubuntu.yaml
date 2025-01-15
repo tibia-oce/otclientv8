@@ -77,6 +77,20 @@ jobs:
       env:
         VCPKG_DEFAULT_TRIPLET: x64-linux
 
+    - name: Debug vcpkg install locations
+      run: |
+        echo "Workspace content:"
+        ls -la $GITHUB_WORKSPACE
+        
+        echo "Searching for installed libraries:"
+        find $GITHUB_WORKSPACE -name "libboost_*"
+        find $GITHUB_WORKSPACE -name "*.so"
+        find $GITHUB_WORKSPACE -name "*.a"
+        
+        echo "Checking vcpkg directories:"
+        ls -R $GITHUB_WORKSPACE/vcpkg/installed || true
+        ls -R $GITHUB_WORKSPACE/vcpkg_installed || true
+
     - name: Download and setup Premake
       run: |
         mkdir -p tools
