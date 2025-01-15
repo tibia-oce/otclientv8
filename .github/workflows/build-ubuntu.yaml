@@ -77,20 +77,6 @@ jobs:
       env:
         VCPKG_DEFAULT_TRIPLET: x64-linux
 
-    - name: VCPkg Linux
-      run: |
-        cd $GITHUB_WORKSPACE/vcpkg
-        ./bootstrap-vcpkg.sh
-        ./vcpkg install --triplet x64-linux
-    
-        echo "Searching for Boost libraries:"
-        find $GITHUB_WORKSPACE -name "libboost_thread*"
-        find $GITHUB_WORKSPACE -name "libboost_system*"
-        find $GITHUB_WORKSPACE -name "libboost_filesystem*"
-    
-        echo "vcpkg installed directory contents:"
-        ls $GITHUB_WORKSPACE/vcpkg/installed/x64-linux/lib
-
     - name: Download and setup Premake
       run: |
         mkdir -p tools
