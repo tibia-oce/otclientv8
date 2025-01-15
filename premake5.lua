@@ -300,7 +300,7 @@ project "framework"
        libdirs { 
            pkgLibs,
            pkgLibs .. "/**",
-           os.getenv("GITHUB_WORKSPACE") and os.getenv("GITHUB_WORKSPACE") .. "/vcpkg/installed/x64-linux/lib" or nil,
+           os.getenv("GITHUB_WORKSPACE") and os.getenv("GITHUB_WORKSPACE") .. "/vcpkg/packages/**/lib" or nil,
        }
 
 -- =============================================================================
