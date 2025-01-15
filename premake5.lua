@@ -1,10 +1,12 @@
+-- =============================================================================
 -- Helper functions for path resolution
+-- =============================================================================
 local function getPackagePaths()
+    local platform = ""
     local rootDir = os.getenv("GITHUB_WORKSPACE") and 
                    os.getenv("GITHUB_WORKSPACE") .. "/vcpkg_installed" or 
                    "vcpkg_installed"
 
-    local platform = ""
     if os.target() == "windows" then
         platform = "x64-windows"
     elseif os.target() == "linux" then
@@ -29,16 +31,16 @@ local function getLibraryPaths(basePath, boostLibs)
         foundLibs = {}
     }
 
-    -- Add environment-specific paths
+    -- If running in a GitHub Actions environment, include paths to the vcpkg-installed libraries.
     local github_path = os.getenv("GITHUB_WORKSPACE")
     if github_path then
         table.insert(paths.extra, github_path .. "/vcpkg/installed/x64-linux/lib")
     end
 
-    -- Recursively search for local builds
+    -- For each Boost library, search in the additional paths to verify it exists.
+    -- This ensures only available libraries are linked, avoiding build errors between
+    -- the operating systems and github runners
     table.insert(paths.extra, basePath .. "/**")
-
-    -- Check for required Boost libraries
     for _, lib in ipairs(boostLibs) do
         for _, dir in ipairs(paths.extra) do
             if os.isfile(dir .. "/lib" .. lib .. ".a") or os.isfile(dir .. "/lib" .. lib .. "-mt.a") then
@@ -61,105 +63,50 @@ workspace "otclient"
     flags { "MultiProcessorCompile" }
     cppdialect "C++17"
 
-    newoption {
-        trigger = "framework-sound",
-        description = "Enable sound framework",
-        default = "false"
-    }
-    newoption {
-        trigger = "use-luajit",
-        description = "Use LuaJIT instead of Lua", 
-        default = "true"
-    }
-    newoption {
-        trigger = "framework-graphics",
-        description = "Enable graphics framework",
-        default = "true"
-    }
-    newoption {
-        trigger = "framework-xml",
-        description = "Enable XML framework",
-        default = "true"
-    }
-    newoption {
-        trigger = "framework-net",
-        description = "Enable networking framework",
-        default = "true"
-    }
-    newoption {
-        trigger = "framework-encryption",
-        description = "Enable encryption support",
-        default = "false"
-    }
+    -- Framework options
+    newoption { trigger = "framework-sound", description = "Enable sound framework", default = "false" }
+    newoption { trigger = "use-luajit", description = "Use LuaJIT instead of Lua", default = "true" }
+    newoption { trigger = "framework-graphics", description = "Enable graphics framework", default = "true" }
+    newoption { trigger = "framework-xml", description = "Enable XML framework", default = "true" }
+    newoption { trigger = "framework-net", description = "Enable networking framework", default = "true" }
+    newoption { trigger = "framework-encryption", description = "Enable encryption support", default = "false" }
 
-    -- Get package paths
+    -- Shared configurations
     local paths = getPackagePaths()
     local pkgIncludes = paths.includes
     local pkgLibs = paths.libs
+    local boostLibs = { "boost_thread", "boost_filesystem", "boost_system", "boost_iostreams", "boost_program_options" }
+    local libPaths = getLibraryPaths(pkgLibs, boostLibs)
+    includedirs { pkgIncludes }
+    libdirs { libPaths.extra }
+    links(libPaths.foundLibs)
+    links { "stdc++", "pthread", "dl", "m", "z", "zip", "bz2", "physfs", "ssl", "crypto" }
 
-    local boostLibs = {
-        "boost_thread", "boost_filesystem", "boost_system",
-        "boost_iostreams", "boost_program_options"
-    }
-
-    -- System configurations
+    -- Platform-specific configurations
     filter "system:linux"
         buildoptions { "`pkg-config --cflags x11 gl luajit`", "-fPIC" }
         linkoptions { "`pkg-config --libs x11 gl luajit`", "-Wl,--start-group", "-Wl,--end-group" }
-        local libPaths = getLibraryPaths(pkgLibs, boostLibs)
-        libdirs(libPaths.extra)
-        links(libPaths.foundLibs)
-        links {
-            -- System libraries
-            "stdc++", "pthread", "dl", "m",
-            "z", "zip", "bz2", "physfs",
-            -- Other dependencies
-            "ssl", "crypto", "GL", "GLU", "GLEW", 
-            "X11", "Xrandr", "ogg", "vorbis", "openal", 
-            "luajit-5.1"
-        }
+        links { "GL", "GLU", "GLEW", "X11", "Xrandr", "ogg", "vorbis", "openal", "luajit-5.1" }
+
+    filter "system:windows"
+        systemversion "latest"
+        buildoptions { "/bigobj" }
+        links { "gdi32", "ws2_32", "iphlpapi", "mswsock", "dbghelp", "bcrypt", "shlwapi", "psapi", "imagehlp", "winmm", "kernel32", "user32", "glu32", "shell32", "advapi32" }
 
     filter "system:macosx"
-        linkoptions { 
-            "-pagezero_size 10000",
-            "-image_base 100000000"
+        linkoptions { "-pagezero_size 10000", "-image_base 100000000", "-L/opt/X11/lib" }
+        includedirs { "/usr/local/include", "/opt/X11/include" }
+        links { 
+            "GLEW", "openal", "luajit-5.1", "zip", "z", "bz2",
+            "ogg", "vorbis", "vorbisfile", "vorbisenc", "X11", "Xrandr",
+            "Xinerama", "Xcursor", "Xext", "GL", "OpenGL.framework",
+            "Cocoa.framework", "Foundation.framework", "CoreFoundation.framework",
+            "IOKit.framework", "CoreVideo.framework" 
         }
         defines { 
-            "PLATFORM_MACOS",
-            "GL_SILENCE_DEPRECATION",
-            "USE_UNSIGNED_LONG_CONVERSION",
-            "DEBUG_PLATFORM",
-            "DEBUG_GRAPHICS",
-            "DEBUG_GL"
-        }
-        
-        includedirs {
-            pkgIncludes,
-            pkgIncludes .. "/arm64-osx/lib",
-            pkgIncludes .. "/arm64-osx/include",
-            pkgIncludes .. "/arm64-osx/include/luajit-2.1",
-            "/usr/local/include",
-            "/opt/X11/include"
-        }
-        
-        libdirs { 
-            pkgLibs,
-            pkgLibs .. "/arm64-osx/lib",
-            "/usr/local/lib",
-            "/opt/X11/lib"
-        }
-        
-        links {
-            "boost_system", "boost_filesystem", "boost_iostreams",
-            "boost_program_options", "boost_process", "boost_random",
-            "boost_regex", "boost_atomic",
-            "crypto", "ssl", "physfs", "GLEW", "openal",
-            "luajit-5.1", "zip", "z", "bz2",
-            "ogg", "vorbis", "vorbisfile", "vorbisenc",
-            "X11", "Xrandr", "Xinerama", "Xcursor", "Xext", "GL",
-            "OpenGL.framework", "Cocoa.framework",
-            "Foundation.framework", "CoreFoundation.framework",
-            "IOKit.framework", "CoreVideo.framework"
+            "PLATFORM_MACOS", "GL_SILENCE_DEPRECATION",
+            "USE_UNSIGNED_LONG_CONVERSION", "DEBUG_PLATFORM",
+            "DEBUG_GRAPHICS", "DEBUG_GL" 
         }
 
 -- =============================================================================
@@ -337,12 +284,6 @@ project "otclient"
             "_WIN32_WINNT=0x0501",
             "PLATFORM_WINDOWS"
         }
-        links {
-            "gdi32", "ws2_32", "iphlpapi", "mswsock",
-            "dbghelp", "bcrypt", "shlwapi", "psapi",
-            "imagehlp", "winmm", "kernel32", "user32",
-            "glu32", "shell32", "advapi32"
-        }
 
     filter "system:linux"
         defines { "PLATFORM_LINUX" }
@@ -355,11 +296,6 @@ project "otclient"
     filter "system:macosx"
         kind "ConsoleApp"
         targetextension ""
-        linkoptions { 
-            "-pagezero_size 10000",
-            "-image_base 100000000",
-            "-L/opt/X11/lib"
-        }
 
     filter "configurations:Debug"
         defines { "DEBUG" }
