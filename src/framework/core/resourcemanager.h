@@ -65,13 +65,8 @@ public:
 
     std::string resolvePath(std::string path);
     std::string getWorkDir() { return "/"; }
-#ifdef ANDROID
-    std::string getWriteDir() { return "/"; }
-    std::string getBinaryName() { return "otclientv8.apk"; }
-#else
     std::string getWriteDir() { return m_writeDir.string(); }
     std::string getBinaryName() { return m_binaryPath.filename().string(); }
-#endif
 
     std::string guessFilePath(const std::string& filename, const std::string& type);
     bool isFileType(const std::string& filename, const std::string& type);
@@ -92,13 +87,10 @@ public:
 
     std::string createArchive(const std::map<std::string, std::string>& files);
     std::map<std::string, std::string> decompressArchive(std::string dataOrPath);
-
-#ifdef WITH_ENCRYPTION
     void encrypt(const std::string& seed = "");
     bool encryptBuffer(std::string & buffer, uint32_t seed = 0);
-#endif
     bool decryptBuffer(std::string & buffer);
-#if defined(WIN32) && not(defined(FREE_VERSION))
+#if defined(WIN32) && !(defined(FREE_VERSION))
     void installDlls(std::filesystem::path dest);
 #endif
 

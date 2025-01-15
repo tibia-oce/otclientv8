@@ -23,6 +23,7 @@
 #include "protocolgame.h"
 #include "game.h"
 #include "client.h"
+#include <framework/core/graphicalapplication.h>
 #include <framework/core/application.h>
 #include <framework/platform/platform.h>
 #include <framework/util/crypt.h>
