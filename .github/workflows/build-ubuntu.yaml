@@ -26,8 +26,6 @@ on:
 
 env:
   PREMAKE_VERSION: 5.0.0-beta2
-  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
-  VCPKG_BINARY_SOURCES: 'clear;default,readwrite'
 
 jobs:
   build:
@@ -38,12 +36,20 @@ jobs:
         include:
           - os: ubuntu-22.04
             buildtype: linux-release
-            triplet: x64-linux
-            artifact-name: otclient
             required-libs: >-
-              libluajit-5.1-dev freeglut3-dev libasound2-dev libgl-dev 
-              libgl1-mesa-dev libglu1-mesa-dev libglew-dev libx11-dev 
-              libxi-dev libxmu-dev mesa-common-dev xorg-dev libxrandr-dev
+              libluajit-5.1-dev 
+              freeglut3-dev 
+              libasound2-dev 
+              libgl-dev 
+              libgl1-mesa-dev 
+              libglu1-mesa-dev 
+              libglew-dev 
+              libx11-dev 
+              libxi-dev 
+              libxmu-dev 
+              mesa-common-dev 
+              xorg-dev 
+              libxrandr-dev
 
     steps:
     - name: Checkout repository
@@ -51,34 +57,17 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Check and install system dependencies
+    - name: Install system dependencies
       run: |
-        # Check for missing libraries
-        missing_libs=""
-        for lib in ${{ matrix.required-libs }}; do
-          if ! dpkg-query -W -f='${Status}' $lib 2>/dev/null | grep -q "ok installed"; then
-            missing_libs="$missing_libs $lib"
-          fi
-        done
+        sudo apt-get update
+        sudo apt-get install -y ${{ matrix.required-libs }}
 
-        # Warn about missing libraries
-        if [ ! -z "$missing_libs" ]; then
-          echo "Warning: The following required libraries are missing:"
-          echo "$missing_libs"
-          echo ""
-          echo "You may need to install these libraries using the following command:"
-          echo "sudo apt-get install$missing_libs"
-          echo ""
-          echo "Continuing with the build process, but it may fail if dependencies are missing."
-        else
-          echo "All required libraries are installed. Proceeding with the build..."
-        fi
-
-        # Install missing libraries
-        if [ ! -z "$missing_libs" ]; then
-          sudo apt-get update
-          sudo apt-get install -y $missing_libs
-        fi
+    - name: Get vcpkg commit id
+      id: vcpkg-step
+      run: |
+        vcpkgCommitId=$(grep '.builtin-baseline' vcpkg.json | awk -F: '{print $2}' | tr -d '," ')
+        echo "vcpkg commit ID: $vcpkgCommitId"
+        echo "vcpkgGitCommitId=$vcpkgCommitId" >> "$GITHUB_OUTPUT"
 
     - name: Setup vcpkg
       uses: lukka/run-vcpkg@v11
@@ -88,25 +77,16 @@ jobs:
 
     - name: Install vcpkg dependencies
       run: |
-        if [ ! -d vcpkg ]; then
-          git clone https://github.com/Microsoft/vcpkg.git
-          cd vcpkg
-          ./bootstrap-vcpkg.sh
-        fi
-        vcpkg/vcpkg install --triplet x64-linux
+        vcpkg install --triplet x64-linux
 
     - name: Download and setup Premake
       run: |
         mkdir -p tools
-        if [ ! -f tools/premake5 ]; then
-          wget --no-netrc -q --show-progress \
-            -O tools/premake.tar.gz \
-            "https://github.com/premake/premake-core/releases/download/v${{ env.PREMAKE_VERSION }}/premake-${{ env.PREMAKE_VERSION }}-linux.tar.gz"
-          cd tools
-          tar -xzf premake.tar.gz
-          rm premake.tar.gz
-          chmod +x premake5
-        fi
+        wget https://github.com/premake/premake-core/releases/download/v${{ env.PREMAKE_VERSION }}/premake-${{ env.PREMAKE_VERSION }}-linux.tar.gz -O tools/premake.tar.gz
+        cd tools
+        tar -xzf premake.tar.gz
+        chmod +x premake5
+        cd ..
 
     - name: Generate project files
       run: |
@@ -133,5 +113,5 @@ jobs:
     - name: Create and Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.artifact-name }}
+        name: otclient
         path: ${{ github.workspace }}/client
