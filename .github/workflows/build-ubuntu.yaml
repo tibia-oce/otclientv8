@@ -17,7 +17,7 @@ on:
     branches:
       - master
       - develop
-      - fix/cmake
+      - feat/premake
     paths:
       - ".github/workflows/build-ubuntu.yaml"
       - "data/**"
@@ -27,10 +27,9 @@ on:
       - "src/**"
 
 env:
-  CMAKE_BUILD_PARALLEL_LEVEL: 2
-  MAKEFLAGS: '-j 2'
   VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
   VCPKG_BINARY_SOURCES: 'clear;default,readwrite'
+  PREMAKE_VERSION: 5.0.0-beta2
 
 jobs:
   build:
@@ -57,10 +56,14 @@ jobs:
               mesa-common-dev
               xorg-dev
               libxrandr-dev
+              libluajit-5.1-dev
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@main
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
     - name: Install OS Dependencies
       if: matrix.packages != ''
       run: |
@@ -73,27 +76,39 @@ jobs:
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 100 --slave /usr/bin/g++ g++ /usr/bin/g++-12 --slave /usr/bin/gcov gcov /usr/bin/gcov-12
         sudo update-alternatives --set gcc /usr/bin/gcc-12
 
-    - name: Restore artifacts and install vcpkg
+    - name: Get vcpkg commit id
       id: vcpkg-step
       run: |
         vcpkgCommitId=$(grep '.builtin-baseline' vcpkg.json | awk -F: '{print $2}' | tr -d '," ')
         echo "vcpkg commit ID: $vcpkgCommitId"
         echo "vcpkgGitCommitId=$vcpkgCommitId" >> "$GITHUB_OUTPUT"
 
-    - name: Get vcpkg commit id from vcpkg.json
-      uses: lukka/run-vcpkg@main
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
       with:
         vcpkgGitCommitId: ${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}
         vcpkgJsonIgnores: "['**/vcpkg/**', '**/browser/overlay-ports/**']"
 
-    - name: Get latest CMake and ninja
-      uses: lukka/get-cmake@main
+    - name: Install vcpkg dependencies
+      run: |
+        vcpkg install --triplet x64-linux
 
-    - name: Run CMake
-      uses: lukka/run-cmake@main
-      with:
-        configurePreset: ${{ matrix.buildtype }}
-        buildPreset: ${{ matrix.buildtype }}
+    - name: Download and setup Premake
+      run: |
+        mkdir -p tools
+        wget https://github.com/premake/premake-core/releases/download/v${{ env.PREMAKE_VERSION }}/premake-${{ env.PREMAKE_VERSION }}-linux.tar.gz -O tools/premake.tar.gz
+        cd tools
+        tar -xzf premake.tar.gz
+        chmod +x premake5
+        cd ..
+
+    - name: Generate project files
+      run: |
+        ./tools/premake5 gmake2
+
+    - name: Build project
+      run: |
+        make -C build config=release
 
     - name: Create Client Package
       run: |
@@ -103,11 +118,11 @@ jobs:
         cp -R ${{ github.workspace }}/mods ${{ github.workspace }}/client/
         cp -R ${{ github.workspace }}/modules ${{ github.workspace }}/client/
         cp ${{ github.workspace }}/init.lua ${{ github.workspace }}/client/
-        cp ${{ github.workspace }}/build/${{ matrix.buildtype }}/otclient ${{ github.workspace }}/client/
+        cp ${{ github.workspace }}/build/bin/Release/otclient ${{ github.workspace }}/client/
         chmod +x ${{ github.workspace }}/client/otclient
 
     - name: Create and Upload Artifact
-      uses: actions/upload-artifact@main
+      uses: actions/upload-artifact@v4
       with:
-        name: client
+        name: ${{ matrix.artifact-name }}
         path: ${{ github.workspace }}/client
