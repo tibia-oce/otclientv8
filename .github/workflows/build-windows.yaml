@@ -17,7 +17,6 @@ on:
     branches:
       - master
       - develop
-      - fix/cmake
     paths:
       - ".github/workflows/build-windows.yaml"
       - "data/**"
@@ -26,54 +25,80 @@ on:
       - "layouts/**"
       - "src/**"
 
+env:
+  PREMAKE_VERSION: 5.0.0-beta2
+
 jobs:
-  Windows:
-    name: Build windows version
+  build:
+    name: Windows Build
     runs-on: windows-2022
-    timeout-minutes: 120
-
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v4
       with:
-          submodules: recursive
+        submodules: recursive
 
-    - name: Setup MSBuild and add to PATH
-      uses: microsoft/setup-msbuild@v1.0.2
-      id: setup_msbuild
+    - name: Setup MSVC environment
+      shell: pwsh
+      run: |
+        # Add MSVC to the path
+        $env:Path += ";C:\Program Files (x86)\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.36.32532\bin\Hostx64\x64"
+        $env:Path += ";C:\Program Files (x86)\Microsoft Visual Studio\2022\Community\Common7\IDE\VC\VCPackages"
 
-    - name: Run vcpkg
-      uses: lukka/run-vcpkg@v7
+    - name: Get vcpkg commit id
+      id: vcpkg-step
+      run: |
+        vcpkgCommitId=$(grep '.builtin-baseline' vcpkg.json | awk -F: '{print $2}' | tr -d '," ')
+        echo "vcpkg commit ID: $vcpkgCommitId"
+        echo "vcpkgGitCommitId=$vcpkgCommitId" >> "$env:GITHUB_OUTPUT"
+
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
       with:
-        vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
-        vcpkgTriplet: x86-windows-static
-        vcpkgGitCommitId: 389e18e8380daab3884e7dc0710ad7f4a264def6
-        vcpkgArguments: >
-          boost-iostreams boost-asio boost-beast boost-system boost-variant boost-lockfree boost-process boost-program-options boost-uuid boost-filesystem
-          luajit glew physfs openal-soft libogg libvorbis zlib libzip bzip2 openssl
+        vcpkgGitCommitId: ${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}
+        vcpkgJsonIgnores: "['**/vcpkg/**', '**/browser/overlay-ports/**']"
+        vcpkgDirectory: ${{ github.workspace }}/vcpkg
+        runVcpkgInstall: true
+      env:
+        VCPKG_DEFAULT_TRIPLET: x64-windows
+        VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
 
-    - name: Integrate vcpkg
+    - name: Download and setup Premake
       run: |
-        ${{ runner.workspace }}/vcpkg/vcpkg integrate install
-        
-    - name: Compile otclient_dx
-      run: |
-        cd vc17
-        MSBuild /property:Configuration=DirectX /p:BUILD_REVISION=${{github.run_number}}
-        
-    - name: Compile otclient_gl
-      run: |
-        cd vc17
-        MSBuild /property:Configuration=OpenGL /p:BUILD_REVISION=${{github.run_number}}
+        mkdir -p tools
+        Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v${{ env.PREMAKE_VERSION }}/premake-${{ env.PREMAKE_VERSION }}-windows.zip" -OutFile "tools/premake.zip"
+        Expand-Archive tools/premake.zip -DestinationPath tools
+        cd tools
+        Rename-Item "premake5.exe" -NewName "premake.exe"
+        cd ..
 
-    - name: Upload binaries
-      uses: actions/upload-artifact@main
+    - name: Generate Visual Studio project files
+      run: |
+        ./tools/premake.exe vs2022
+
+    - name: Build project
+      run: |
+        MSBuild.exe otclient.sln /p:Configuration=Release
+
+    - name: Create Client Package
+      run: |
+        mkdir -p ${{ github.workspace }}\client
+        Copy-Item -Path build\bin\Release\otclient.exe -Destination ${{ github.workspace }}\client -Force
+        Copy-Item -Path build\bin\Release\*.dll -Destination ${{ github.workspace }}\client -ErrorAction SilentlyContinue
+
+        # Copy additional files
+        Copy-Item -Recurse -Path layouts -Destination ${{ github.workspace }}\client
+        Copy-Item -Recurse -Path data -Destination ${{ github.workspace }}\client
+        Copy-Item -Recurse -Path mods -Destination ${{ github.workspace }}\client
+        Copy-Item -Recurse -Path modules -Destination ${{ github.workspace }}\client
+        Copy-Item -Path init.lua -Destination ${{ github.workspace }}\client
+
+    - name: Create and Upload Artifact
+      uses: actions/upload-artifact@v4
       with:
-        name: Download-binaries
-        path: |
-          otclient_gl.exe
-          otclient_dx.exe
-        if-no-files-found: error
+        name: otclient
+        path: ${{ github.workspace }}\client
+
 
   # release:
   #   runs-on: ubuntu-latest
