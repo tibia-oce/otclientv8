@@ -74,9 +74,12 @@ jobs:
       with:
         vcpkgGitCommitId: ${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}
         vcpkgJsonIgnores: "['**/vcpkg/**', '**/browser/overlay-ports/**']"
+      env:
+        VCPKG_DEFAULT_TRIPLET: x64-linux
 
     - name: Install vcpkg dependencies
       run: |
+        vcpkg integrate install
         vcpkg install --triplet x64-linux
 
     - name: Download and setup Premake
@@ -90,7 +93,8 @@ jobs:
 
     - name: Generate project files
       run: |
-        ./tools/premake5 gmake2
+        ./tools/premake5 --ci=true gmake2
+
     - name: VCPkg Linux
       run: |
         cd $GITHUB_WORKSPACE/vcpkg

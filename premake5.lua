@@ -39,24 +39,24 @@ workspace "otclient"
        default = "false"
    }
 
-   local pkgDirectory = "vcpkg_installed"
-   local githubPkgDirectory = os.getenv("GITHUB_WORKSPACE") and (os.getenv("GITHUB_WORKSPACE") .. "/vcpkg_installed") or pkgDirectory
+   local pkgDirectory = os.getenv("GITHUB_WORKSPACE") and 
+    os.getenv("GITHUB_WORKSPACE") .. "/vcpkg/installed" or 
+    "vcpkg_installed"
    local pkgIncludes, pkgLibs
-   
    if os.target() == "windows" then
        pkgIncludes = pkgDirectory .. "/x64-windows/include"
        pkgLibs = pkgDirectory .. "/x64-windows/lib"
    elseif os.target() == "linux" then
        pkgIncludes = pkgDirectory .. "/x64-linux/include"
        pkgLibs = pkgDirectory .. "/x64-linux/lib"
-   elseif os.target() == "macosx" then
-       if os.host() == "macosx" and os.getenv("HOSTTYPE") == "arm64" then
-           pkgIncludes = pkgDirectory .. "/arm64-osx/include"
-           pkgLibs = pkgDirectory .. "/arm64-osx/lib"
-       else
-           pkgIncludes = pkgDirectory .. "/x64-osx/include"
-           pkgLibs = pkgDirectory .. "/x64-osx/lib"
-       end
+    elseif os.target() == "macosx" then
+        if os.host() == "macosx" and os.getenv("HOSTTYPE") == "arm64" then
+            pkgIncludes = pkgDirectory .. "/arm64-osx/include"
+            pkgLibs = pkgDirectory .. "/arm64-osx/lib"
+        else
+            pkgIncludes = pkgDirectory .. "/x64-osx/include"
+            pkgLibs = pkgDirectory .. "/x64-osx/lib"
+        end
    else
        error("Unsupported platform: " .. os.target())
    end
@@ -64,16 +64,35 @@ workspace "otclient"
    filter "system:linux"
        buildoptions { "`pkg-config --cflags x11 gl luajit`" }
        linkoptions { "`pkg-config --libs x11 gl luajit`" }
-       links {
-           "stdc++", "pthread", "dl", "m",
-           "z", "zip", "bz2", "physfs",
-           "boost_thread", "boost_filesystem", "boost_system",
-           "boost_iostreams", "boost_program_options",
-           "ssl", "crypto",
-           "GL", "GLU", "GLEW", "X11", "Xrandr",
-           "ogg", "vorbis", "openal",
-           "luajit-5.1"
-       }
+        -- Base system libraries
+        links {
+            "stdc++", "pthread", "dl", "m",
+            "z", "zip", "bz2", "physfs"
+        }
+        
+        -- Dynamic boost library handling
+        local boost_libs = {
+            "boost_thread", "boost_filesystem", "boost_system",
+            "boost_iostreams", "boost_program_options"
+        }
+        
+        local github_path = os.getenv("GITHUB_WORKSPACE")
+        for _, lib in ipairs(boost_libs) do
+            if os.isfile(pkgLibs .. "/lib" .. lib .. ".a") or
+               os.isfile(pkgLibs .. "/lib" .. lib .. "-mt.a") or
+               (github_path and os.isfile(github_path .. "/vcpkg/installed/x64-linux/lib/lib" .. lib .. ".a")) then
+                links { lib }
+            end
+        end
+        
+        -- Rest of the libraries
+        links {
+            "ssl", "crypto",
+            "GL", "GLU", "GLEW", "X11", "Xrandr",
+            "ogg", "vorbis", "openal",
+            "luajit-5.1"
+        }
+
 
     filter "system:macosx"
         linkoptions { 
@@ -141,7 +160,11 @@ workspace "otclient"
            "CoreVideo.framework"
        }
    
-
+    filter { "system:linux", "options:ci" }
+       defines { "CI_BUILD" }
+       includedirs {
+           os.getenv("GITHUB_WORKSPACE") and os.getenv("GITHUB_WORKSPACE") .. "/vcpkg/installed/x64-linux/include" or nil
+       }
 
    if not os.target() == "macosx" and not _OPTIONS["wasm"] then
        if _OPTIONS["crash-handler"] then
@@ -278,8 +301,13 @@ project "framework"
    filter { "options:use-luajit=false" }
        includedirs { "/usr/include/lua5.1" }
 
-   filter "system:linux"
+    filter "system:linux"
        buildoptions { "-fPIC" }
+       libdirs { 
+           pkgLibs,
+           pkgLibs .. "/**",
+           os.getenv("GITHUB_WORKSPACE") and os.getenv("GITHUB_WORKSPACE") .. "/vcpkg/installed/x64-linux/lib" or nil,
+       }
 
 -- =============================================================================
 -- Client Project
@@ -348,12 +376,14 @@ project "otclient"
            end
        end
 
-   filter "system:linux"
+    filter "system:linux"
        defines { "PLATFORM_LINUX" }
        linkoptions { 
            "-Wl,--start-group",
            "-L" .. pkgLibs,
-           "-L../vcpkg_installed/x64-linux/lib",
+           "-L" .. (os.getenv("GITHUB_WORKSPACE") and 
+                   os.getenv("GITHUB_WORKSPACE") .. "/vcpkg/installed/x64-linux/lib" or 
+                   "../vcpkg_installed/x64-linux/lib"),
            "-Wl,--end-group"
        }
 
