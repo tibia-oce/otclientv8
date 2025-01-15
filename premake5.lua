@@ -22,21 +22,31 @@ local function getPackagePaths()
     }
 end
 
-local function getLibraryPaths(basePath)
+local function getLibraryPaths(basePath, boostLibs)
     local paths = {
         base = basePath,
-        extra = {}
+        extra = {},
+        foundLibs = {}
     }
 
     -- Add environment-specific paths
     local github_path = os.getenv("GITHUB_WORKSPACE")
     if github_path then
         table.insert(paths.extra, github_path .. "/vcpkg/installed/x64-linux/lib")
-        table.insert(paths.extra, github_path .. "/vcpkg/packages/**/lib")
     end
 
-    -- Add recursive search for local builds
+    -- Recursively search for local builds
     table.insert(paths.extra, basePath .. "/**")
+
+    -- Check for required Boost libraries
+    for _, lib in ipairs(boostLibs) do
+        for _, dir in ipairs(paths.extra) do
+            if os.isfile(dir .. "/lib" .. lib .. ".a") or os.isfile(dir .. "/lib" .. lib .. "-mt.a") then
+                table.insert(paths.foundLibs, lib)
+                break
+            end
+        end
+    end
 
     return paths
 end
@@ -87,23 +97,25 @@ workspace "otclient"
     local pkgIncludes = paths.includes
     local pkgLibs = paths.libs
 
+    local boostLibs = {
+        "boost_thread", "boost_filesystem", "boost_system",
+        "boost_iostreams", "boost_program_options"
+    }
+
     -- System configurations
     filter "system:linux"
-        buildoptions { "`pkg-config --cflags x11 gl luajit`" }
-        linkoptions { "`pkg-config --libs x11 gl luajit`" }
-        local libPaths = getLibraryPaths(pkgLibs)
+        buildoptions { "`pkg-config --cflags x11 gl luajit`", "-fPIC" }
+        linkoptions { "`pkg-config --libs x11 gl luajit`", "-Wl,--start-group", "-Wl,--end-group" }
+        local libPaths = getLibraryPaths(pkgLibs, boostLibs)
         libdirs(libPaths.extra)
+        links(libPaths.foundLibs)
         links {
             -- System libraries
             "stdc++", "pthread", "dl", "m",
             "z", "zip", "bz2", "physfs",
-            -- Boost libraries
-            "boost_thread", "boost_filesystem", "boost_system",
-            "boost_iostreams", "boost_program_options",
             -- Other dependencies
-            "ssl", "crypto",
-            "GL", "GLU", "GLEW", "X11", "Xrandr",
-            "ogg", "vorbis", "openal",
+            "ssl", "crypto", "GL", "GLU", "GLEW", 
+            "X11", "Xrandr", "ogg", "vorbis", "openal", 
             "luajit-5.1"
         }
 
