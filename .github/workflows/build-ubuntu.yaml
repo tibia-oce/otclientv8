@@ -94,10 +94,23 @@ jobs:
 
     - name: VCPkg Linux
       run: |
-        # Use the vcpkg in the repository
         cd $GITHUB_WORKSPACE/vcpkg
         ./bootstrap-vcpkg.sh
-        ./vcpkg install --triplet x64-linux
+        
+        # Verbose package installation
+        ./vcpkg install --triplet x64-linux --debug
+    
+        # Check installation directory
+        echo "Checking installation directories:"
+        find $GITHUB_WORKSPACE/vcpkg -type d | grep "installed"
+    
+        # List all installed packages
+        ./vcpkg list
+    
+        # Verify library existence
+        echo "Searching for boost libraries:"
+        find $GITHUB_WORKSPACE -name "*boost*.a" -o -name "*boost*.so"
+
     
     - name: Diagnose Library Issues
       run: |
