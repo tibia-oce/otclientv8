@@ -92,6 +92,20 @@ jobs:
       run: |
         ./tools/premake5 gmake2
 
+    - name: Diagnose Library Issues
+      run: |
+        echo "VCPkg Installation Path:"
+        echo $VCPKG_INSTALLATION_ROOT
+    
+        echo "Checking vcpkg-installed libraries:"
+        find $VCPKG_INSTALLATION_ROOT/installed/x64-linux/lib -name "*boost*"
+    
+        echo "pkg-config library paths:"
+        pkg-config --libs boost
+    
+        echo "System library paths:"
+        ldconfig -p | grep boost
+
     - name: Build project
       run: |
         make -C build config=release
