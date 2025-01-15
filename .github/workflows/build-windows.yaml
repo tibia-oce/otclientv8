@@ -27,6 +27,13 @@ on:
 
 env:
   PREMAKE_VERSION: 5.0.0-beta2
+  MSBUILD_OPTIONS: >
+    /p:Configuration=Release
+    /p:Platform=x64
+    /p:VcpkgEnabled=true
+    /p:VcpkgEnableManifest=true
+    /p:VcpkgManifestInstall=true
+    /p:VcpkgConfiguration=Release
 
 jobs:
   build:
@@ -38,12 +45,9 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Setup MSVC environment
-      shell: pwsh
-      run: |
-        # Add MSVC to the path
-        $env:Path += ";C:\Program Files (x86)\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.36.32532\bin\Hostx64\x64"
-        $env:Path += ";C:\Program Files (x86)\Microsoft Visual Studio\2022\Community\Common7\IDE\VC\VCPackages"
+    - name: Setup MSBuild and add to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+      id: setup_msbuild
 
     - name: Restore artifacts and install vcpkg
       id: vcpkg-step
@@ -79,15 +83,13 @@ jobs:
 
     - name: Build project
       run: |
-        MSBuild.exe otclient.sln /p:Configuration=Release
+        MSBuild.exe otclient.sln ${{ env.MSBUILD_OPTIONS }}
 
     - name: Create Client Package
       run: |
         mkdir -p ${{ github.workspace }}\client
         Copy-Item -Path build\bin\Release\otclient.exe -Destination ${{ github.workspace }}\client -Force
         Copy-Item -Path build\bin\Release\*.dll -Destination ${{ github.workspace }}\client -ErrorAction SilentlyContinue
-
-        # Copy additional files
         Copy-Item -Recurse -Path layouts -Destination ${{ github.workspace }}\client
         Copy-Item -Recurse -Path data -Destination ${{ github.workspace }}\client
         Copy-Item -Recurse -Path mods -Destination ${{ github.workspace }}\client
