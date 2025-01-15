@@ -45,13 +45,14 @@ jobs:
         $env:Path += ";C:\Program Files (x86)\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.36.32532\bin\Hostx64\x64"
         $env:Path += ";C:\Program Files (x86)\Microsoft Visual Studio\2022\Community\Common7\IDE\VC\VCPackages"
 
-    - name: Get vcpkg commit id
+    - name: Restore artifacts and install vcpkg
       id: vcpkg-step
       run: |
-        vcpkgCommitId=$(grep '.builtin-baseline' vcpkg.json | awk -F: '{print $2}' | tr -d '," ')
-        echo "vcpkg commit ID: $vcpkgCommitId"
-        echo "vcpkgGitCommitId=$vcpkgCommitId" >> "$env:GITHUB_OUTPUT"
-
+        $json = Get-Content vcpkg.json -Raw | ConvertFrom-Json
+        $vcpkgCommitId = $json.'builtin-baseline'
+        Write-Host "vcpkg commit ID: $vcpkgCommitId"
+        echo "vcpkgGitCommitId=$vcpkgCommitId" >> $env:GITHUB_OUTPUT
+    
     - name: Setup vcpkg
       uses: lukka/run-vcpkg@v11
       with:
