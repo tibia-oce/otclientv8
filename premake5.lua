@@ -22,6 +22,25 @@ local function getPackagePaths()
     }
 end
 
+local function getLibraryPaths(basePath)
+    local paths = {
+        base = basePath,
+        extra = {}
+    }
+
+    -- Add environment-specific paths
+    local github_path = os.getenv("GITHUB_WORKSPACE")
+    if github_path then
+        table.insert(paths.extra, github_path .. "/vcpkg/installed/x64-linux/lib")
+        table.insert(paths.extra, github_path .. "/vcpkg/packages/**/lib")
+    end
+
+    -- Add recursive search for local builds
+    table.insert(paths.extra, basePath .. "/**")
+
+    return paths
+end
+
 -- =============================================================================
 -- Global Configuration
 -- =============================================================================
@@ -72,13 +91,16 @@ workspace "otclient"
     filter "system:linux"
         buildoptions { "`pkg-config --cflags x11 gl luajit`" }
         linkoptions { "`pkg-config --libs x11 gl luajit`" }
-        
-        -- Base system libraries
+        local libPaths = getLibraryPaths(pkgLibs)
+        libdirs(libPaths.extra)
         links {
+            -- System libraries
             "stdc++", "pthread", "dl", "m",
             "z", "zip", "bz2", "physfs",
+            -- Boost libraries
             "boost_thread", "boost_filesystem", "boost_system",
             "boost_iostreams", "boost_program_options",
+            -- Other dependencies
             "ssl", "crypto",
             "GL", "GLU", "GLEW", "X11", "Xrandr",
             "ogg", "vorbis", "openal",
