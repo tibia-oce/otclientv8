@@ -77,24 +77,6 @@ jobs:
       env:
         VCPKG_DEFAULT_TRIPLET: x64-linux
 
-    - name: Install vcpkg dependencies
-      run: |
-        vcpkg integrate install
-        vcpkg install --triplet x64-linux
-
-    - name: Download and setup Premake
-      run: |
-        mkdir -p tools
-        wget https://github.com/premake/premake-core/releases/download/v${{ env.PREMAKE_VERSION }}/premake-${{ env.PREMAKE_VERSION }}-linux.tar.gz -O tools/premake.tar.gz
-        cd tools
-        tar -xzf premake.tar.gz
-        chmod +x premake5
-        cd ..
-
-    - name: Generate project files
-      run: |
-        ./tools/premake5 gmake2
-
     - name: VCPkg Linux
       run: |
         cd $GITHUB_WORKSPACE/vcpkg
@@ -108,17 +90,19 @@ jobs:
     
         echo "vcpkg installed directory contents:"
         ls $GITHUB_WORKSPACE/vcpkg/installed/x64-linux/lib
-  
-    - name: Diagnose Library Issues
+
+    - name: Download and setup Premake
       run: |
-        echo "VCPkg Installation Path:"
-        echo $GITHUB_WORKSPACE/vcpkg
-    
-        echo "Checking vcpkg-installed libraries:"
-        find $GITHUB_WORKSPACE/vcpkg/installed/x64-linux/lib -name "*boost*"
-    
-          echo "Vcpkg root contents:"
-          ls $GITHUB_WORKSPACE/vcpkg
+        mkdir -p tools
+        wget https://github.com/premake/premake-core/releases/download/v${{ env.PREMAKE_VERSION }}/premake-${{ env.PREMAKE_VERSION }}-linux.tar.gz -O tools/premake.tar.gz
+        cd tools
+        tar -xzf premake.tar.gz
+        chmod +x premake5
+        cd ..
+
+    - name: Generate project files
+      run: |
+        ./tools/premake5 gmake2
 
     - name: Build project
       run: |
