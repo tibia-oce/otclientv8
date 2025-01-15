@@ -80,20 +80,6 @@ jobs:
         VCPKG_DEFAULT_TRIPLET: x64-linux
         VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
 
-    - name: Verify vcpkg installation
-      run: |
-        echo "Environment:"
-        env | grep VCPKG
-        
-        echo "Library locations:"
-        find $GITHUB_WORKSPACE -name "boost" -type d
-        find $GITHUB_WORKSPACE/vcpkg_installed -type f || true
-        find $GITHUB_WORKSPACE/vcpkg/installed -type f || true
-        
-        echo "Include directories:"
-        ls -la $GITHUB_WORKSPACE/vcpkg_installed/x64-linux/include || true
-        ls -la $GITHUB_WORKSPACE/vcpkg/installed/x64-linux/include || true
-
     - name: Download and setup Premake
       run: |
         mkdir -p tools
