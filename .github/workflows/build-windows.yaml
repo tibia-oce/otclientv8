@@ -40,6 +40,7 @@ jobs:
     name: Windows Build
     runs-on: windows-2022
     steps:
+
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
@@ -47,7 +48,6 @@ jobs:
 
     - name: Setup MSBuild and add to PATH
       uses: microsoft/setup-msbuild@v1.0.2
-      id: setup_msbuild
 
     - name: Restore artifacts and install vcpkg
       id: vcpkg-step
@@ -83,7 +83,7 @@ jobs:
 
     - name: Build project
       run: |
-        MSBuild.exe otclient.sln ${{ env.MSBUILD_OPTIONS }}
+        MSBuild.exe build/otclient.sln ${{ env.MSBUILD_OPTIONS }}
 
     - name: Create Client Package
       run: |
