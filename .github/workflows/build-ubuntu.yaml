@@ -91,27 +91,20 @@ jobs:
     - name: Generate project files
       run: |
         ./tools/premake5 gmake2
-
     - name: VCPkg Linux
       run: |
         cd $GITHUB_WORKSPACE/vcpkg
         ./bootstrap-vcpkg.sh
-        
-        # Verbose package installation
-        ./vcpkg install --triplet x64-linux --debug
+        ./vcpkg install --triplet x64-linux
     
-        # Check installation directory
-        echo "Checking installation directories:"
-        find $GITHUB_WORKSPACE/vcpkg -type d | grep "installed"
+        echo "Searching for Boost libraries:"
+        find $GITHUB_WORKSPACE -name "libboost_thread*"
+        find $GITHUB_WORKSPACE -name "libboost_system*"
+        find $GITHUB_WORKSPACE -name "libboost_filesystem*"
     
-        # List all installed packages
-        ./vcpkg list
-    
-        # Verify library existence
-        echo "Searching for boost libraries:"
-        find $GITHUB_WORKSPACE -name "*boost*.a" -o -name "*boost*.so"
-
-    
+        echo "vcpkg installed directory contents:"
+        ls $GITHUB_WORKSPACE/vcpkg/installed/x64-linux/lib
+  
     - name: Diagnose Library Issues
       run: |
         echo "VCPkg Installation Path:"
