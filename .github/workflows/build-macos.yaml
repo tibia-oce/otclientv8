@@ -26,6 +26,7 @@ on:
       - "src/**"
 
 env:
+  PREMAKE_VERSION: 5.0.0-beta2
   CMAKE_BUILD_PARALLEL_LEVEL: 2
   MAKEFLAGS: '-j 2'
   VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
@@ -50,10 +51,12 @@ jobs:
 
     - name: Install macOS Dependencies
       run: |
-        brew install xquartz
+        brew install --cask xquartz
         brew install openal-soft
         brew install physfs
         brew install sdl2
+        brew install ninja
+        brew install cmake
 
     - name: Restore artifacts and install vcpkg
       id: vcpkg-step
@@ -72,13 +75,15 @@ jobs:
       env:
         VCPKG_DEFAULT_TRIPLET: x64-osx
         VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
+        VCPKG_FORCE_SYSTEM_BINARIES: 1
+        VCPKG_OSX_ARCHITECTURES: "x86_64"
 
     - name: Download and setup Premake
       run: |
         mkdir -p tools
-        wget https://github.com/premake/premake-core/releases/download/v${{ env.PREMAKE_VERSION }}/premake-${{ env.PREMAKE_VERSION }}-linux.tar.gz -O tools/premake.tar.gz
+        curl -L -o tools/premake.tar.gz https://github.com/premake/premake-core/releases/download/v${{ env.PREMAKE_VERSION }}/premake-${{ env.PREMAKE_VERSION }}-macosx.tar.gz
         cd tools
-        tar -xzf premake.tar.gz
+        tar -xf premake.tar.gz
         chmod +x premake5
         cd ..
 
@@ -93,12 +98,8 @@ jobs:
     - name: Create Client Package
       run: |
         mkdir -p ${{ github.workspace }}/client
-        cp -R ${{ github.workspace }}/layouts ${{ github.workspace }}/client/
-        cp -R ${{ github.workspace }}/data ${{ github.workspace }}/client/
-        cp -R ${{ github.workspace }}/mods ${{ github.workspace }}/client/
-        cp -R ${{ github.workspace }}/modules ${{ github.workspace }}/client/
-        cp ${{ github.workspace }}/init.lua ${{ github.workspace }}/client/
-        cp ${{ github.workspace }}/build/${{ matrix.buildtype }}/otclient ${{ github.workspace }}/client/
+        cp -R {layouts,data,mods,modules,init.lua} ${{ github.workspace }}/client/
+        cp build/bin/Release/otclient ${{ github.workspace }}/client/
         chmod +x ${{ github.workspace }}/client/otclient
 
     - name: Create and Upload Artifact
