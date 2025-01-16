@@ -105,7 +105,13 @@ workspace "otclient"
 
     filter "system:macosx"
         linkoptions { "-pagezero_size 10000", "-image_base 100000000", "-L/opt/X11/lib" }
-        includedirs { "/usr/local/include", "/opt/X11/include", pkgIncludes .. "/luajit" }
+        includedirs { 
+            "/usr/local/include", 
+            "/opt/X11/include", 
+            pkgIncludes, 
+            pkgIncludes .. "/luajit",
+            pkgIncludes .. "/luajit-2.1",
+        }
         links {
             "GLEW", "openal", "luajit-5.1", "zip", "z", "bz2", "ogg",
             "vorbis", "vorbisfile", "vorbisenc", "X11", "Xrandr",
