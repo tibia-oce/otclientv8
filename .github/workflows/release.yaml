@@ -1,11 +1,7 @@
 name: Release
 on:
   workflow_run:
-    workflows: [
-      'Build: Windows',
-      'Build: Ubuntu',
-      'Build: MacOS'
-    ]
+    workflows: [ 'Build: Windows', 'Build: Ubuntu', 'Build: MacOS' ]
     branches: [master, develop]
     types:
       - completed
