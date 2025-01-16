@@ -39,6 +39,8 @@ local function getLibraryPaths(basePath, boostLibs)
             platform = "x64-windows"
         elseif os.target() == "linux" then
             platform = "x64-linux"
+        elseif os.target() == "macosx" then
+            platform = "x64-osx"
         end
         table.insert(paths.extra, github_path .. "/vcpkg/installed/" .. platform .. "/lib")
     end
