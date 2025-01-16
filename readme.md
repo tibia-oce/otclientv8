@@ -1,9 +1,4 @@
 # OTClientV8
-[![Workflow](https://github.com/tibia-oce/migrate/actions/workflows/build-release.yaml/badge.svg)](https://github.com/tibia-oce/migrate/actions/workflows/build-release.yaml)
-
-> \[!NOTE]
->
->Based on [edubart/otclient](https://github.com/edubart/otclient).
 
 OTClientV8 is highly optimized, cross-platform tile based 2d game engine built with c++17, lua, physfs, OpenGL ES 2.0 and OpenAL. It has been created as alternative client for OpenTibia. This client is designed specifically to work with the [Mythbound server](https://github.com/tibia-oce/server).
 
@@ -38,9 +33,9 @@ Afterward, you need to provide the client a copy of the [assets](https://github.
 
 | Platform       | Build        | Notes        |
 | :------------- | :----------: | :----------: |
-| Linux        | [![Build & Release](https://github.com/tibia-oce/otclientv8/actions/workflows/build-release.yaml/badge.svg)](https://github.com/tibia-oce/otclientv8/actions/workflows/build-release.yaml) | |
-| Windows        | [![Build & Release](https://github.com/tibia-oce/otclientv8/actions/workflows/build-release.yaml/badge.svg)](https://github.com/tibia-oce/otclientv8/actions/workflows/build-release.yaml) | Requires Windows 7+ |
-| MacOS        | [![Build & Release](https://github.com/tibia-oce/otclientv8/actions/workflows/build-release.yaml/badge.svg)](https://github.com/tibia-oce/otclientv8/actions/workflows/build-release.yaml) | Requires [xquartz](https://www.xquartz.org/) |
+| Linux        | [![Build & Release](https://github.com/tibia-oce/otclientv8/actions/workflows/build-ubuntu.yaml/badge.svg)](https://github.com/tibia-oce/otclientv8/actions/workflows/build-ubuntu.yaml) | |
+| Windows        | [![Build & Release](https://github.com/tibia-oce/otclientv8/actions/workflows/build-windows.yaml/badge.svg)](https://github.com/tibia-oce/otclientv8/actions/workflows/build-windows.yaml) | Requires Windows 7+ |
+| MacOS        | [![Build & Release](https://github.com/tibia-oce/otclientv8/actions/workflows/build-macos.yaml/badge.svg)](https://github.com/tibia-oce/otclientv8/actions/workflows/build-macos.yaml) | Requires [xquartz](https://www.xquartz.org/) |
 
 ## Compilation
 
