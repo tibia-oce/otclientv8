@@ -1,10 +1,10 @@
 name: Release
+
 on:
   workflow_run:
     workflows: [ 'Build: Windows', 'Build: Ubuntu', 'Build: MacOS' ]
-    branches: [master, develop]
-    types:
-      - completed
+    branches: [ master, develop ]
+    types: [ completed ]
 
 jobs:
   release:
@@ -21,11 +21,26 @@ jobs:
         with:
           node-version: '20.x'
 
-      - name: Download build artifacts
+      - name: Download Windows Artifact
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
-          pattern: 'mythbound-*'
+          name: mythbound-windows
+          path: artifacts/mythbound-windows
+          run-id: ${{ github.event.workflow.id }}
+
+      - name: Download Linux Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mythbound-linux
+          path: artifacts/mythbound-linux
+          run-id: ${{ github.event.workflow.id }}
+
+      - name: Download MacOS Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mythbound-macos
+          path: artifacts/mythbound-macos
+          run-id: ${{ github.event.workflow.id }}
 
       - name: List downloaded artifacts
         run: ls -R artifacts/
