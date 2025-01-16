@@ -17,7 +17,6 @@ on:
     branches:
       - master
       - develop
-      - feat/premake
     paths:
       - ".github/workflows/build-macos.yaml"
       - "data/**"
