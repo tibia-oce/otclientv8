@@ -7,17 +7,16 @@ on:
       - master
       - develop
     paths:
+      - ".github/workflows/build-macos.yaml"
       - "data/**"
       - "mods/**" 
       - "modules/**"
       - "layouts/**"
-      - ".github/workflows/build-macos.yaml"
       - "src/**"
   push:
     branches:
       - master
       - develop
-      - fix/cmake
     paths:
       - ".github/workflows/build-macos.yaml"
       - "data/**"
@@ -27,6 +26,7 @@ on:
       - "src/**"
 
 env:
+  PREMAKE_VERSION: 5.0.0-beta2
   CMAKE_BUILD_PARALLEL_LEVEL: 2
   MAKEFLAGS: '-j 2'
   VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
@@ -41,7 +41,7 @@ jobs:
         include:
           - os: macOS-14
             buildtype: macos-release
-            triplet: x64-osx
+            triplet: arm64-osx
             artifact-name: otclient
             packages: sccache
 
@@ -51,10 +51,12 @@ jobs:
 
     - name: Install macOS Dependencies
       run: |
-        brew install xquartz
+        brew install --cask xquartz
         brew install openal-soft
         brew install physfs
         brew install sdl2
+        brew install ninja
+        brew install cmake
 
     - name: Restore artifacts and install vcpkg
       id: vcpkg-step
@@ -63,34 +65,45 @@ jobs:
         echo "vcpkg commit ID: $vcpkgCommitId"
         echo "vcpkgGitCommitId=$vcpkgCommitId" >> "$GITHUB_OUTPUT"
 
-    - name: Get vcpkg commit id from vcpkg.json
-      uses: lukka/run-vcpkg@main
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
       with:
         vcpkgGitCommitId: ${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}
         vcpkgJsonIgnores: "['**/vcpkg/**', '**/browser/overlay-ports/**']"
+        vcpkgDirectory: ${{ github.workspace }}/vcpkg
+        runVcpkgInstall: true
+      env:
+        VCPKG_DEFAULT_TRIPLET: arm64-osx
+        VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
+        VCPKG_FORCE_SYSTEM_BINARIES: 1
+        VCPKG_OSX_ARCHITECTURES: "arm64"
 
-    - name: Get latest CMake and ninja
-      uses: lukka/get-cmake@main
+    - name: Download and setup Premake
+      run: |
+        mkdir -p tools
+        curl -L -o tools/premake.tar.gz https://github.com/premake/premake-core/releases/download/v${{ env.PREMAKE_VERSION }}/premake-${{ env.PREMAKE_VERSION }}-macosx.tar.gz
+        cd tools
+        tar -xf premake.tar.gz
+        chmod +x premake5
+        cd ..
 
-    - name: Run CMake
-      uses: lukka/run-cmake@main
-      with:
-        configurePreset: ${{ matrix.buildtype }}
-        buildPreset: ${{ matrix.buildtype }}
+    - name: Generate project files
+      run: |
+        ./tools/premake5 gmake2
+
+    - name: Build project
+      run: |
+        make -C build config=release
 
     - name: Create Client Package
       run: |
         mkdir -p ${{ github.workspace }}/client
-        cp -R ${{ github.workspace }}/layouts ${{ github.workspace }}/client/
-        cp -R ${{ github.workspace }}/data ${{ github.workspace }}/client/
-        cp -R ${{ github.workspace }}/mods ${{ github.workspace }}/client/
-        cp -R ${{ github.workspace }}/modules ${{ github.workspace }}/client/
-        cp ${{ github.workspace }}/init.lua ${{ github.workspace }}/client/
-        cp ${{ github.workspace }}/build/${{ matrix.buildtype }}/otclient ${{ github.workspace }}/client/
+        cp -R {layouts,data,mods,modules,init.lua} ${{ github.workspace }}/client/
+        cp build/bin/Release/otclient ${{ github.workspace }}/client/
         chmod +x ${{ github.workspace }}/client/otclient
 
     - name: Create and Upload Artifact
-      uses: actions/upload-artifact@main
+      uses: actions/upload-artifact@v4
       with:
-        name: client
+        name: mythbound-macos
         path: ${{ github.workspace }}/client

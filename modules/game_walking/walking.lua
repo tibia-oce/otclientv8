@@ -102,6 +102,10 @@ function init()
       [CHAT_MODE.ON] = "",
       [CHAT_MODE.OFF] = ""
     }, true)
+    
+    if g_game.isOnline() then
+      onGameStart()
+    end
 end
 
 function terminate()
@@ -116,6 +120,10 @@ function terminate()
   stopSmartWalk()
   unbindKeys()
   disableWSAD()
+  
+  for dir = North, NorthWest do
+    Keybind.delete("Movement", "Go " .. DirectionString[dir])
+  end
   
   loaded = false
 end

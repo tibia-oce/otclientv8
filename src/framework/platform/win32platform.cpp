@@ -154,7 +154,7 @@ ticks_t Platform::getFileModificationTime(std::string file)
 bool Platform::openUrl(std::string url, bool now)
 {
     if (now) {
-        return (int)ShellExecuteW(NULL, L"open", stdext::utf8_to_utf16(url).c_str(), NULL, NULL, SW_SHOWNORMAL) >= 32;
+        return (INT_PTR)ShellExecuteW(NULL, L"open", stdext::utf8_to_utf16(url).c_str(), NULL, NULL, SW_SHOWNORMAL) >= 32;
     } else {
         g_dispatcher.scheduleEvent([url] {
             ShellExecuteW(NULL, L"open", stdext::utf8_to_utf16(url).c_str(), NULL, NULL, SW_SHOWNORMAL);
@@ -166,7 +166,7 @@ bool Platform::openUrl(std::string url, bool now)
 bool Platform::openDir(std::string path, bool now)
 {
     if (now) {
-        return (int)ShellExecuteW(NULL, L"open", L"explorer.exe", stdext::utf8_to_utf16(path).c_str(), NULL, SW_SHOWNORMAL) >= 32;
+        return (INT_PTR)ShellExecuteW(NULL, L"open", L"explorer.exe", stdext::utf8_to_utf16(path).c_str(), NULL, SW_SHOWNORMAL) >= 32;
     } else {
         g_dispatcher.scheduleEvent([path] {
             ShellExecuteW(NULL, L"open", L"explorer.exe", stdext::utf8_to_utf16(path).c_str(), NULL, SW_SHOWNORMAL);
@@ -383,26 +383,21 @@ std::vector<std::string> Platform::getProcesses()
     return {};
 #else
     std::vector<std::string> ret;
-
     HANDLE hProcessSnap;
-    PROCESSENTRY32 pe32;
+    PROCESSENTRY32W pe32;  // Note: Using PROCESSENTRY32W explicitly
     hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-
     if (hProcessSnap == INVALID_HANDLE_VALUE) {
         return ret;
     }
-
-    pe32.dwSize = sizeof(PROCESSENTRY32);
-    if (!Process32First(hProcessSnap, &pe32)) {
+    pe32.dwSize = sizeof(PROCESSENTRY32W);
+    if (!Process32FirstW(hProcessSnap, &pe32)) {  // Using Process32FirstW
         CloseHandle(hProcessSnap);
         return ret;
     }
-
     do {
-        ret.push_back(pe32.szExeFile);
-    } while (Process32Next(hProcessSnap, &pe32));
+        ret.push_back(stdext::utf16_to_utf8(pe32.szExeFile));
+    } while (Process32NextW(hProcessSnap, &pe32));  // Using Process32NextW
     CloseHandle(hProcessSnap);
-
     return ret;
 #endif
 }
@@ -410,12 +405,12 @@ std::vector<std::string> Platform::getProcesses()
 std::vector<std::string> windows;
 BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 {
-    char title[50];
-    GetWindowText(hwnd, title, sizeof(title));
-    title[sizeof(title) - 1] = 0;
-    std::string window_title(title);
+    wchar_t title[50];
+    GetWindowTextW(hwnd, title, sizeof(title)/sizeof(wchar_t));
+    title[sizeof(title)/sizeof(wchar_t) - 1] = 0;
+    std::string window_title = std::string(stdext::utf16_to_utf8(title));
     if (window_title.size() >= 2) {
-        windows.push_back(window_title);
+        windows.push_back(std::move(window_title));
     }
     return TRUE;
 }

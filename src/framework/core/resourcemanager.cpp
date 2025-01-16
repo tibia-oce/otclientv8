@@ -960,7 +960,6 @@ void ResourceManager::installDlls(std::filesystem::path dest)
 }
 #endif
 
-#if defined(WITH_ENCRYPTION) && !defined(ANDROID)
 void ResourceManager::encrypt(const std::string& seed) {
     const std::string dirsToCheck[] = { "data", "modules", "mods", "layouts" };
     const std::string luaExtension = ".lua";
@@ -1024,7 +1023,6 @@ void ResourceManager::encrypt(const std::string& seed) {
         g_logger.info(stdext::format("%s - encrypted", it.string()));
     }
 }
-#endif 
 
 bool ResourceManager::decryptBuffer(std::string& buffer) {
 #ifdef FREE_VERSION
@@ -1068,7 +1066,6 @@ bool ResourceManager::decryptBuffer(std::string& buffer) {
 #endif
 }
 
-#ifdef WITH_ENCRYPTION
 bool ResourceManager::encryptBuffer(std::string& buffer, uint32_t seed) {
     if (buffer.size() >= 4 && buffer.substr(0, 4).compare("ENC3") == 0)
         return false; // already encrypted
@@ -1100,7 +1097,6 @@ bool ResourceManager::encryptBuffer(std::string& buffer, uint32_t seed) {
     buffer = new_buffer;
     return true;
 }
-#endif
 
 void ResourceManager::setLayout(std::string layout)
 {

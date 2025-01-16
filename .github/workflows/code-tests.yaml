@@ -22,22 +22,13 @@ on:
       - "src/**"
 
 jobs:
-  lua:
+  tests:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code.
         uses: actions/checkout@main
 
       # todo: https://github.com/OTAcademy/otclientv8/blob/master/.github/workflows/pr-test.yml
-      - name: Tests
-        run: true
-
-  cpp:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
       # todo: https://github.com/opentibiabr/canary/tree/main/tests
       - name: Tests
         run: true
