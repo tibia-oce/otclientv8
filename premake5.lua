@@ -116,7 +116,7 @@ workspace "otclient"
             "vorbis", "vorbisfile", "vorbisenc", "X11", "Xrandr",
             "Xinerama", "Xcursor", "Xext", "GL", "OpenGL.framework",
             "Cocoa.framework", "Foundation.framework", "CoreFoundation.framework",
-            "IOKit.framework", "CoreVideo.framework"
+            "IOKit.framework", "CoreVideo.framework", "ssl", "crypto", "physfs"
         }
         defines {
             "PLATFORM_MACOS", "GL_SILENCE_DEPRECATION",
