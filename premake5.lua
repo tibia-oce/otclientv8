@@ -39,6 +39,8 @@ local function getLibraryPaths(basePath, boostLibs)
             platform = "x64-windows"
         elseif os.target() == "linux" then
             platform = "x64-linux"
+        elseif os.target() == "macosx" then
+            platform = "x64-osx"
         end
         table.insert(paths.extra, github_path .. "/vcpkg/installed/" .. platform .. "/lib")
     end
@@ -103,10 +105,16 @@ workspace "otclient"
 
     filter "system:macosx"
         linkoptions { "-pagezero_size 10000", "-image_base 100000000", "-L/opt/X11/lib" }
-        includedirs { "/usr/local/include", "/opt/X11/include" }
+        includedirs { 
+            "/usr/local/include",
+            "/opt/X11/include",
+            pkgIncludes .. "/luajit",
+            pkgIncludes .. "/GL",
+            pkgIncludes .. "/GLEW"
+        }
         links { 
-            "GLEW", "openal", "luajit-5.1", "zip", "z", "bz2", "ogg", 
-            "vorbis", "vorbisfile", "vorbisenc", "X11", "Xrandr", 
+            "GLEW", "openal", "luajit-5.1", "zip", "z", "bz2", "ogg", "vorbis",
+            "vorbisfile", "vorbisenc", "X11", "Xrandr", "ssl", "crypto"
             "Xinerama", "Xcursor", "Xext", "GL", "OpenGL.framework", 
             "Cocoa.framework", "Foundation.framework", "CoreFoundation.framework",
             "IOKit.framework", "CoreVideo.framework" 
