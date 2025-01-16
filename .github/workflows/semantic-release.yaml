@@ -5,9 +5,9 @@ on:
     workflows: [
       'Build: Windows',
       'Build: Ubuntu',
-      # 'Build: MacOS'
+      'Build: MacOS'
     ]
-    branches: [master, develop]
+    branches: [master, develop, feat/premake]
     types:
       - completed
 
