@@ -7,11 +7,11 @@ on:
       - master
       - develop
     paths:
+      - ".github/workflows/build-windows.yaml"
       - "data/**"
       - "mods/**" 
       - "modules/**"
       - "layouts/**"
-      - ".github/workflows/build-windows.yaml"
       - "src/**"
   push:
     branches:
@@ -27,81 +27,79 @@ on:
 
 env:
   PREMAKE_VERSION: 5.0.0-beta2
+  VCPKG_DEFAULT_TRIPLET: x64-windows
+  VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
   MSBUILD_OPTIONS: >
-    /p:Configuration=Release
+    /p:Configuration=Release 
     /p:Platform=x64
     /p:VcpkgEnabled=true
     /p:VcpkgEnableManifest=true
     /p:VcpkgManifestInstall=true
     /p:VcpkgConfiguration=Release
+    /p:UseMultiToolTask=true
+    /p:EnforceProcessCountAcrossBuilds=true
 
 jobs:
   build:
     name: Windows Build
     runs-on: windows-2022
+    
     steps:
-
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         submodules: recursive
 
-    - name: Setup MSBuild and add to PATH
+    - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v1.0.2
-
-    - name: Restore artifacts and install vcpkg
-      id: vcpkg-step
+      
+    - name: Install vcpkg
       run: |
-        $json = Get-Content vcpkg.json -Raw | ConvertFrom-Json
-        $vcpkgCommitId = $json.'builtin-baseline'
-        Write-Host "vcpkg commit ID: $vcpkgCommitId"
-        echo "vcpkgGitCommitId=$vcpkgCommitId" >> $env:GITHUB_OUTPUT
-    
-    - name: Setup vcpkg
-      uses: lukka/run-vcpkg@v11
-      with:
-        vcpkgGitCommitId: ${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}
-        vcpkgJsonIgnores: "['**/vcpkg/**', '**/browser/overlay-ports/**']"
-        vcpkgDirectory: ${{ github.workspace }}/vcpkg
-        runVcpkgInstall: true
-      env:
-        VCPKG_DEFAULT_TRIPLET: x64-windows
-        VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg/installed
+        git clone https://github.com/Microsoft/vcpkg.git
+        cd vcpkg
+        .\bootstrap-vcpkg.bat
+        .\vcpkg.exe integrate install
+        cd ..
 
-    - name: Download and setup Premake
+    - name: Cache vcpkg packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ${{ github.workspace }}/vcpkg
+          ${{ github.workspace }}/vcpkg_installed
+        key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+
+    - name: Install dependencies
+      run: |
+        .\vcpkg\vcpkg.exe install --triplet x64-windows
+
+    - name: Download Premake
       run: |
         mkdir -p tools
         Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v${{ env.PREMAKE_VERSION }}/premake-${{ env.PREMAKE_VERSION }}-windows.zip" -OutFile "tools/premake.zip"
         Expand-Archive tools/premake.zip -DestinationPath tools
         cd tools
         Rename-Item "premake5.exe" -NewName "premake.exe"
-        cd ..
 
-    - name: Generate Visual Studio project files
-      run: |
-        ./tools/premake.exe vs2022
+    - name: Generate Solution
+      run: ./tools/premake.exe vs2022
 
-    - name: Build project
+    - name: Build Solution
       run: |
         MSBuild.exe build/otclient.sln ${{ env.MSBUILD_OPTIONS }}
 
-    - name: Create Client Package
+    - name: Create Package
       run: |
         mkdir -p ${{ github.workspace }}\client
-        Copy-Item -Path build\bin\Release\otclient.exe -Destination ${{ github.workspace }}\client -Force
+        Copy-Item -Path build\bin\Release\otclient.exe -Destination ${{ github.workspace }}\client
         Copy-Item -Path build\bin\Release\*.dll -Destination ${{ github.workspace }}\client -ErrorAction SilentlyContinue
-        Copy-Item -Recurse -Path layouts -Destination ${{ github.workspace }}\client
-        Copy-Item -Recurse -Path data -Destination ${{ github.workspace }}\client
-        Copy-Item -Recurse -Path mods -Destination ${{ github.workspace }}\client
-        Copy-Item -Recurse -Path modules -Destination ${{ github.workspace }}\client
-        Copy-Item -Path init.lua -Destination ${{ github.workspace }}\client
+        Copy-Item -Recurse -Path layouts,data,mods,modules,init.lua -Destination ${{ github.workspace }}\client
 
-    - name: Create and Upload Artifact
+    - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: otclient
         path: ${{ github.workspace }}\client
-
 
   # release:
   #   runs-on: ubuntu-latest
