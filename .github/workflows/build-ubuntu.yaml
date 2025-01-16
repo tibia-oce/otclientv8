@@ -114,5 +114,5 @@ jobs:
     - name: Create and Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: otclient
+        name: mythbound-linux
         path: ${{ github.workspace }}/client
