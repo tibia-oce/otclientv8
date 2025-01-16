@@ -69,7 +69,6 @@ jobs:
         vcpkgJsonIgnores: "['**/vcpkg/**']"
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
         runVcpkgInstall: true
-        appendedCacheKey: ${{ hashFiles('vcpkg.json') }}
 
     - name: Download Premake
       run: |
