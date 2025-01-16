@@ -104,17 +104,17 @@ workspace "otclient"
     filter "system:macosx"
         linkoptions { "-pagezero_size 10000", "-image_base 100000000", "-L/opt/X11/lib" }
         includedirs { "/usr/local/include", "/opt/X11/include" }
-        links { 
-            "GLEW", "openal", "luajit-5.1", "zip", "z", "bz2", "ogg", 
-            "vorbis", "vorbisfile", "vorbisenc", "X11", "Xrandr", 
-            "Xinerama", "Xcursor", "Xext", "GL", "OpenGL.framework", 
+        links {
+            "GLEW", "openal", "luajit-5.1", "zip", "z", "bz2", "ogg",
+            "vorbis", "vorbisfile", "vorbisenc", "X11", "Xrandr",
+            "Xinerama", "Xcursor", "Xext", "GL", "OpenGL.framework",
             "Cocoa.framework", "Foundation.framework", "CoreFoundation.framework",
-            "IOKit.framework", "CoreVideo.framework" 
+            "IOKit.framework", "CoreVideo.framework"
         }
-        defines { 
+        defines {
             "PLATFORM_MACOS", "GL_SILENCE_DEPRECATION",
             "USE_UNSIGNED_LONG_CONVERSION", "DEBUG_PLATFORM",
-            "DEBUG_GRAPHICS", "DEBUG_GL" 
+            "DEBUG_GRAPHICS", "DEBUG_GL"
         }
 
     filter "system:linux"
