@@ -99,12 +99,19 @@ workspace "otclient"
     filter "system:windows"
         systemversion "latest"
         buildoptions { "/bigobj" }
-        defines { "PLATFORM_WINDOWS", "WIN32", "_WINDOWS", "NOMINMAX", "_WIN32_WINNT=0x0501" }
+        defines { 
+            "PLATFORM_WINDOWS", 
+            "WIN32", 
+            "_WINDOWS", 
+            "NOMINMAX", 
+            "_WIN32_WINNT=0x0501",
+            "OPENSSL_NO_DEPRECATED"  -- Add this to use newer OpenSSL API
+        }
         links {
             "kernel32", "user32", "gdi32", "advapi32", "ws2_32",
             "iphlpapi", "mswsock", "bcrypt", "shlwapi", "psapi",
             "winmm", "glu32", "shell32", "OpenGL32", "glew32", "dbghelp",
-            "libssl", "libcrypto"
+            "libssl", "libcrypto", "crypt32"
         }
         includedirs {
             pkgIncludes,
@@ -115,10 +122,16 @@ workspace "otclient"
             pkgIncludes .. "/physfs",
             pkgIncludes .. "/openssl"
         }
+        libdirs {
+            "build/bin/%{cfg.buildcfg}",
+            pkgLibs,
+            pkgLibs .. "/pkgconfig"
+        }
         linkoptions {
             "/NODEFAULTLIB:imagehlp.lib",
-            "/IGNORE:4006", -- Suppress multiple definition warnings
-            "/LTCG" -- Enable link-time code generation for optimization
+            "/IGNORE:4006",
+            "/LTCG",
+            "/SAFESEH:NO"
         }
 
     filter "system:macosx"
