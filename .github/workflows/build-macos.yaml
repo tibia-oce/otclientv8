@@ -41,7 +41,7 @@ jobs:
         include:
           - os: macOS-14
             buildtype: macos-release
-            triplet: x64-osx
+            triplet: arm64-osx
             artifact-name: otclient
             packages: sccache
 
@@ -73,10 +73,10 @@ jobs:
         vcpkgDirectory: ${{ github.workspace }}/vcpkg
         runVcpkgInstall: true
       env:
-        VCPKG_DEFAULT_TRIPLET: x64-osx
+        VCPKG_DEFAULT_TRIPLET: arm64-osx
         VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
         VCPKG_FORCE_SYSTEM_BINARIES: 1
-        VCPKG_OSX_ARCHITECTURES: "x86_64"
+        VCPKG_OSX_ARCHITECTURES: "arm64"
 
     - name: Download and setup Premake
       run: |

@@ -12,8 +12,7 @@ local function getPackagePaths()
     elseif os.target() == "linux" then
         platform = "x64-linux"
     elseif os.target() == "macosx" then
-        platform = os.host() == "macosx" and os.getenv("HOSTTYPE") == "arm64" 
-                  and "arm64-osx" or "x64-osx"
+        platform = "arm64-osx"
     else
         error("Unsupported platform: " .. os.target())
     end
