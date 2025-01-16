@@ -3,28 +3,9 @@ name: "Build: Windows"
 on:
   workflow_dispatch:
   pull_request:
-    branches:
-      - master
-      - develop
-    paths:
-      - "data/**"
-      - "mods/**" 
-      - "modules/**"
-      - "layouts/**"
-      - ".github/workflows/build-windows.yaml"
-      - "src/**"
+    branches: [ master, develop ]
   push:
-    branches:
-      - master
-      - develop
-    paths:
-      - ".github/workflows/build-windows.yaml"
-      - "data/**"
-      - "mods/**"
-      - "modules/**"
-      - "layouts/**"
-      - "src/**"
-
+    branches: [ master, develop ]
 
 env:
   PREMAKE_VERSION: 5.0.0-beta2
@@ -54,7 +35,15 @@ jobs:
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v1.0.2
       
-    - name: Cache vcpkg
+    - name: Install vcpkg
+      run: |
+        git clone https://github.com/Microsoft/vcpkg.git
+        cd vcpkg
+        .\bootstrap-vcpkg.bat
+        .\vcpkg.exe integrate install
+        cd ..
+
+    - name: Cache vcpkg packages
       uses: actions/cache@v3
       with:
         path: |
@@ -62,13 +51,9 @@ jobs:
           ${{ github.workspace }}/vcpkg_installed
         key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
 
-    - name: Setup vcpkg
-      uses: lukka/run-vcpkg@v11
-      with:
-        vcpkgGitCommitId: ${{ steps.vcpkg-step.outputs.vcpkgGitCommitId }}
-        vcpkgJsonIgnores: "['**/vcpkg/**']"
-        vcpkgDirectory: ${{ github.workspace }}/vcpkg
-        runVcpkgInstall: true
+    - name: Install dependencies
+      run: |
+        .\vcpkg\vcpkg.exe install --triplet x64-windows
 
     - name: Download Premake
       run: |

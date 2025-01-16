@@ -105,7 +105,8 @@ workspace "otclient"
             "_WINDOWS", 
             "NOMINMAX", 
             "_WIN32_WINNT=0x0501",
-            "OPENSSL_NO_DEPRECATED"
+            "OPENSSL_NO_DEPRECATED",
+            "OPENSSL_API_COMPAT=0x10100000L"  -- Add this line for OpenSSL 1.1+
         }
         links {
             "kernel32", "user32", "gdi32", "advapi32", "ws2_32",
@@ -126,14 +127,14 @@ workspace "otclient"
             "build/bin/%{cfg.buildcfg}",
             pkgLibs,
             pkgLibs .. "/pkgconfig",
-            "$(VcpkgRoot)/installed/$(VcpkgTriplet)/lib",
-            "$(VcpkgRoot)/installed/$(VcpkgTriplet)/bin"
+            "%{VCPKG_ROOT}/installed/%{VCPKG_TRIPLET}/lib",
+            "%{VCPKG_ROOT}/installed/%{VCPKG_TRIPLET}/bin"
         }
         linkoptions {
             "/NODEFAULTLIB:imagehlp.lib",
             "/IGNORE:4006",
             "/LTCG",
-            "/SAFESEH:NO"  -- Required for OpenSSL on Windows
+            "/SAFESEH:NO"
         }
 
     filter "system:macosx"
