@@ -1,5 +1,4 @@
 name: Release
-
 on:
   workflow_run:
     workflows: [
@@ -21,35 +20,27 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      
+      # Wait for all builds to complete
+      - name: Wait for other workflows
+        uses: softprops/wait-on-check@v1
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+          check-name: |
+            Build: Windows
+            Build: Ubuntu
+            Build: MacOS
+          repo: ${{ github.repository }}
+          wait-interval: 30
 
-      # Download artifacts from Windows build
-      - name: Download Windows Artifacts
+      # Download artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: otclient
-          path: artifacts/windows
-          run-id: ${{ github.event.workflow_run.id }}
-          repository: ${{ github.repository }}
+          pattern: otclient|client
+          merge-multiple: true
+          path: artifacts
 
-      # Download artifacts from Ubuntu build
-      - name: Download Ubuntu Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: otclient
-          path: artifacts/linux
-          run-id: ${{ github.event.workflow_run.id }}
-          repository: ${{ github.repository }}
-
-      # Download artifacts from MacOS build
-      - name: Download MacOS Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: client
-          path: artifacts/macos
-          run-id: ${{ github.event.workflow_run.id }}
-          repository: ${{ github.repository }}
-
-      # Additional steps to handle the downloaded artifacts
       - name: List downloaded artifacts
         run: ls -R artifacts/
 
