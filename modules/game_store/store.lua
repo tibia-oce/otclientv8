@@ -2,6 +2,7 @@ local GAME_STORE_CODE = 102
 local DONATION_URL = nil
 
 gameStoreWindow = nil
+shopButton = nil
 offersGrid = nil
 msgWindow = nil
 local giftWindow = nil
@@ -99,6 +100,11 @@ function destroy()
     if msgWindow then
         msgWindow:destroy()
         msgWindow = nil
+    end
+
+    if shopButton then
+        shopButton:destroy()
+        shopButton = nil
     end
 
     if giftWindow then
