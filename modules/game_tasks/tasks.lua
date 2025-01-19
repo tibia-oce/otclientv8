@@ -20,6 +20,7 @@ local RewardType = {
   Teleport = 7,
 }
 function init()
+  ProtocolGame.registerExtendedOpcode(OPCODE, onExtendedOpcode)
   connect(
     g_game,
     {
@@ -27,9 +28,6 @@ function init()
       onGameEnd = destroy
     }
   )
-
-  ProtocolGame.registerExtendedOpcode(OPCODE, onExtendedOpcode)
-
   if g_game.isOnline() then
     create()
   end
