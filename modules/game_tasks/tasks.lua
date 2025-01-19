@@ -54,7 +54,7 @@ function create()
   end
   
   openTasksButton = modules.client_topmenu.addRightGameToggleButton("openTasksButton", tr("Open Tasks Panel"), "/game_tasks/images/tasks", toggleTasksPanel)
-  openTasksButton:setOn(true)
+  openTasksButton:setOn(false)
   
   trackerButton = modules.client_topmenu.addRightGameToggleButton("trackerButton", tr("Tasks Tracker"), "/game_tasks/images/tracker", toggleTracker)
   trackerButton:setOn(true)
@@ -97,11 +97,18 @@ function destroy()
   playerLevel = 0
   jsonData = ""
 end
+
 function toggleTasksPanel()
-  if tasksWindow:isVisible() then
+  if not tasksWindow then
+    return
+  end
+
+  if openTasksButton:isOn() then
     tasksWindow:hide()
+    openTasksButton:setOn(false)
   else
     tasksWindow:show()
+    openTasksButton:setOn(true)
   end
 end
 
