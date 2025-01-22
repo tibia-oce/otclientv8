@@ -17,8 +17,9 @@ DungeonMenuItem < Panel
     id: boss
     anchors.top: parent.top
     anchors.left: parent.left
-    size: 48 48
+    size: 58 58
     padding-top: 10
+    margin-left: 4
     old-scaling: true
     animate: true
 
@@ -27,8 +28,8 @@ DungeonMenuItem < Panel
     anchors.top: parent.top
     anchors.left: boss.right
     anchors.right: parent.right
-    margin-top: 1
-    margin-left: 3
+    margin-top: 6
+    margin-left: 10
     text: Dungeon Name
     color: #dfdfdf
 
@@ -38,7 +39,7 @@ DungeonMenuItem < Panel
     anchors.left: boss.right
     anchors.right: parent.right
     margin-top: 2
-    margin-left: 3
+    margin-left: 10
 
   Label
     id: queue
@@ -46,7 +47,7 @@ DungeonMenuItem < Panel
     anchors.left: boss.right
     anchors.right: parent.right
     margin-top: 2
-    margin-left: 3
+    margin-left: 10
 
 DifficultyButton < Panel
   width: 162
