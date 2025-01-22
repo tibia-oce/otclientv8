@@ -345,13 +345,14 @@ function selectDungeon(dungeonId)
     -- Challenges
     local challengesPanel = dungeonInfo:getChildById("challenges")
     challengesPanel:destroyChildren()
-    for i = 1, #dungeon.challenges do
-      local challenge = dungeon.challenges[i]
-      local widget = g_ui.createWidget("ChallengePanel", challengesPanel)
-      widget:setText(challenge.title .. " (" .. challenge.points .. " Points)")
-      widget:getChildById("checkbox"):setChecked(challenge.completed)
-      widget:getChildById("description"):setText(challenge.desc)
-    end
+    -- todo(dungeons): implemented on serverside but needs to be extended.
+    -- for i = 1, #dungeon.challenges do
+    --   local challenge = dungeon.challenges[i]
+    --   local widget = g_ui.createWidget("ChallengePanel", challengesPanel)
+    --   widget:setText(challenge.title .. " (" .. challenge.points .. " Points)")
+    --   widget:getChildById("checkbox"):setChecked(challenge.completed)
+    --   widget:getChildById("description"):setText(challenge.desc)
+    -- end
 
     onDifficultyFocus(1, true)
   end
