@@ -331,9 +331,9 @@ MainWindow
       id: requirements
       anchors.top: prev.bottom
       anchors.left: parent.left
-      size: 221 192
+      size: 221 160
       margin-top: 1
-      text: Requirements
+      text: Player Requirements
 
       Label
         anchors.top: parent.top
@@ -438,10 +438,13 @@ MainWindow
         anchors.left: parent.left
         anchors.right: parent.right
         height: 65
-        text: Items
+        margin-top: 6
+        size: 247 120
+        text: Item Requirements 
         layout:
           type: grid
-          cell-size: 34 34
+          margin-left: 6
+          cell-size: 35 35
           flow: true
 
         $disabled:
@@ -461,12 +464,24 @@ MainWindow
           id: item5
         LootItem
           id: item6
+        LootItem
+          id: item7
+        LootItem
+          id: item8
+        LootItem
+          id: item9
+        LootItem
+          id: item10
+        LootItem
+          id: item11
+        LootItem
+          id: item12
 
     MiniPanel
       id: bossLoot
       anchors.top: prev.top
       anchors.left: prev.right
-      size: 247 162
+      size: 247 160
       text: Potential Boss Loot
       layout:
         type: grid
@@ -609,8 +624,8 @@ MainWindow
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        margin-left: 2
-        margin-top: 2
+        margin-left: 8
+        margin-top: 8
         text-auto-resize: true
         text: Status:
 
@@ -618,7 +633,7 @@ MainWindow
           id: queueStatus
           anchors.top: parent.top
           anchors.right: parent.right
-          margin-right: 5
+          margin-right: 14
           text-align: right
           text-auto-resize: true
           color: green
@@ -629,7 +644,7 @@ MainWindow
         anchors.top: prev.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        margin-left: 2
+        margin-left: 8
         text: Estimated Time:
         text-auto-resize: true
 
@@ -637,7 +652,7 @@ MainWindow
           id: queueTime
           anchors.top: parent.top
           anchors.right: parent.right
-          margin-right: 5
+          margin-right: 14
           text-align: right
           text: 00:00:00
           text-auto-resize: true
@@ -647,7 +662,7 @@ MainWindow
         anchors.left: parent.left
         anchors.right: parent.right
         margin: 0 10
-        margin-top: 10
+        margin-top: 12
 
       HorizontalSeparator
         anchors.top: prev.bottom
@@ -659,7 +674,7 @@ MainWindow
       Label
         anchors.centerIn: parent
         text: Waiting Time
-        margin-bottom: 22
+        margin-bottom: 26
         color: #adadad
         text-auto-resize: true
 
@@ -667,13 +682,13 @@ MainWindow
         id: queueWaiting
         anchors.centerIn: parent
         text: 00:00:00
-        margin-bottom: 7
+        margin-bottom: 10
         text-auto-resize: true
 
       Label
         id: queueDungeon
         anchors.centerIn: parent
-        margin-top: 11
+        margin-top: 6
         text: ------
         text-auto-resize: true
 
@@ -682,7 +697,7 @@ MainWindow
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         text: Join
-        margin-bottom: 5
+        margin-bottom: 24
         @onClick: modules.game_dungeons.joinQueue()
 
     ChallengesPanel
@@ -695,7 +710,7 @@ MainWindow
       vertical-scrollbar: challengesScroll
       layout:
         type: verticalBox
-    
+
     VerticalScrollBar
       id: challengesScroll
       anchors.top: challenges.top
