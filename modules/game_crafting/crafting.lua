@@ -105,6 +105,9 @@ function onExtendedOpcode(protocol, code, buffer)
         show()
     elseif action == "crafted" then
         onItemCrafted()
+        if selectedCategory and selectedCraftId then
+            selectItem(selectedCraftId)
+        end
 
     end
 end
