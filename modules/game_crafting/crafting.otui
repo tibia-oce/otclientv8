@@ -101,7 +101,7 @@ CountLabel < Label
   margin-top: 5
 
 MainWindow
-  text: Crafting System
+  text: Crafting
   size: 640 520
 
   Panel
@@ -109,18 +109,34 @@ MainWindow
     anchors.top: parent.top
     anchors.horizontalCenter: parent.horizontalCenter
     width: 580
-    height: 68
+    height: 50
     layout:
       type: grid
-      cell-size: 115 34
+      cell-size: 116 40
       flow: true
     grid-columns: 3
-    grid-rows: 2
+    grid-rows: 1
 
     CategoryButton
-      id: herbalistCat
+      id: allCat
       width: 108
-      @onClick: modules.game_crafting.selectCategory("herbalist")
+      margin-top: 6
+      @onClick: modules.game_crafting.selectCategory("all")
+      grid.column: 0
+      grid.row: 0
+
+      CategoryItem
+        item-id: 25437
+
+      CategoryLabel
+        margin-left: 8
+        text: All
+    
+    CategoryButton
+      id: alchemyCat
+      width: 108
+      @onClick: modules.game_crafting.selectCategory("alchemy")
+      margin-top: 6
       grid.column: 0
       grid.row: 0
 
@@ -128,85 +144,53 @@ MainWindow
         item-id: 25423
 
       CategoryLabel
-        text: Herbalist
-
-    CategoryButton
-      id: woodcuttingCat
-      width: 111
-      @onClick: modules.game_crafting.selectCategory("woodcutting")
-      grid.column: 1
-      grid.row: 0
-
-      CategoryItem
-        item-id: 23946
-
-      CategoryLabel
-        text: Woodcutting
-
-    CategoryButton
-      id: miningCat
-      width: 98
-      @onClick: modules.game_crafting.selectCategory("mining")
-      grid.column: 2
-      grid.row: 0
-
-      CategoryItem
-        item-id: 23775
-
-      CategoryLabel
-        text: Mining
+        margin-left: 8
+        text: Alchemy
     
     CategoryButton
-      id: generalcraftingCat
+      id: toolsCat
+      margin-top: 6
       width: 98
-      @onClick: modules.game_crafting.selectCategory("generalcrafting")
+      @onClick: modules.game_crafting.selectCategory("tools")
       grid.column: 2
       grid.row: 0
 
       CategoryItem
-        item-id: 20312
+        item-id: 23761
 
       CategoryLabel
-        text: Crafting
-    
-    CategoryButton
-      id: armorsmithCat
-      width: 98
-      @onClick: modules.game_crafting.selectCategory("armorsmith")
-      grid.column: 2
-      grid.row: 0
-
-      CategoryItem
-        item-id: 25456
-
-      CategoryLabel
-        text: Armorsmith
+        margin-left: 8
+        text: Tools
 
     CategoryButton
-      id: weaponsmithCat
+      id: armourCat
+      margin-top: 6
       width: 98
-      @onClick: modules.game_crafting.selectCategory("weaponsmith")
+      @onClick: modules.game_crafting.selectCategory("armour")
       grid.column: 2
       grid.row: 0
 
       CategoryItem
-        item-id: 25446
+        item-id: 25374
 
       CategoryLabel
-        text: Weaponsmith
-    
+        margin-left: 8
+        text: Armour
+
     CategoryButton
-      id: jewelsmithCat
+      id: weaponsCat
+      margin-top: 6
       width: 98
-      @onClick: modules.game_crafting.selectCategory("jewelsmith")
+      @onClick: modules.game_crafting.selectCategory("weapons")
       grid.column: 2
       grid.row: 0
 
       CategoryItem
-        item-id: 25470
+        item-id: 25375
 
       CategoryLabel
-        text: Jewelsmith
+        margin-left: 8
+        text: Weapons
 
   HorizontalSeparator
     anchors.top: prev.bottom
@@ -498,9 +482,10 @@ MainWindow
     CategoryButton
       id: craftButton
       anchors.bottom: parent.bottom
-      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.left: parent.left
+      margin-left: 3
       size: 80 34
-      margin-bottom: 5
+      margin-bottom: 6
       @onClick: modules.game_crafting.craftItem()
 
       CategoryItem
