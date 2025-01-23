@@ -58,6 +58,11 @@ end
 function toggle()
     if not window then return end
     if window:isVisible() then return hide() end
+    Crafts = {all = {}, alchemy = {}, armour = {}, weapons = {}, tools = {}}
+    local protocolGame = g_game.getProtocolGame()
+    if protocolGame then
+        protocolGame:sendExtendedOpcode(CODE, json.encode({action = "fetch"}))
+    end
     show()
 end
 
@@ -95,6 +100,7 @@ function onExtendedOpcode(protocol, code, buffer)
         craftPanel:recursiveGetChildById("playerMoney"):setText(comma_value(
                                                                     money))
     elseif action == "show" then
+        Crafts = {all = {}, alchemy = {}, armour = {}, weapons = {}, tools = {}}
         selectItem(selectedCraftId)
         show()
     elseif action == "crafted" then
