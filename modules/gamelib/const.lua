@@ -68,12 +68,18 @@ Skill = {
   Distance = 4,
   Shielding = 5,
   Fishing = 6,
-  CriticalChance = 7,
-  CriticalDamage = 8,
-  LifeLeechChance = 9,
-  LifeLeechAmount = 10,
-  ManaLeechChance = 11,
-  ManaLeechAmount = 12
+  Mining = 7,
+  Woodcutting = 8,
+  Herbalism = 9,
+  Crafting = 10,
+  Enchanting = 11,
+  Disenchanting = 12,
+  CriticalChance = 13,
+  CriticalDamage = 14,
+  LifeLeechChance = 15,
+  LifeLeechAmount = 16,
+  ManaLeechChance = 17,
+  ManaLeechAmount = 18
 }
 
 North = Directions.North
