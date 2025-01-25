@@ -217,7 +217,7 @@ function refresh()
     onSkillChange(player, i, player:getSkillLevel(i), player:getSkillLevelPercent(i))
     onBaseSkillChange(player, i, player:getSkillBaseLevel(i))
 
-    if i > Skill.Fishing then
+    if i > Skill.Disenchanting then
       toggleSkill('skillId'..i, hasAdditionalSkills)
     end
   end
@@ -227,7 +227,7 @@ function refresh()
   local contentsPanel = skillsWindow:getChildById('contentsPanel')
   skillsWindow:setContentMinimumHeight(44)
   if hasAdditionalSkills then
-    skillsWindow:setContentMaximumHeight(480)
+    skillsWindow:setContentMaximumHeight(640)
   else
     skillsWindow:setContentMaximumHeight(390)
   end

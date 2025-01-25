@@ -94,7 +94,13 @@ local iconsTable = {
     ["Fist"] = 4,
     ["Shielding"] = 5,
     ["Sword"] = 6,
-    ["Fishing"] = 7
+    ["Fishing"] = 7,
+    ["Mining"] = 8,
+    ["Woodcutting"] = 9,
+    ["Herbalism"] = 10,
+    ["Crafting"] = 11,
+    ["Enchanting"] = 12,
+    ["Disenchanting"] = 13
 }
 
 local healthBar = nil
@@ -105,7 +111,7 @@ local experienceTooltip = 'You have %d%% to advance to level %d.'
 local settings = {}
 
 function init()
-    
+
     connect(LocalPlayer, {
         onHealthChange = onHealthChange,
         onManaChange = onManaChange,
@@ -165,16 +171,16 @@ function refresh(profileChange)
     onLevelChange(player, player:getLevel(), player:getLevelPercent())
     onHealthChange(player, player:getHealth(), player:getMaxHealth())
     onManaChange(player, player:getMana(), player:getMaxMana())
-    onMagicLevelChange(player, player:getMagicLevel(), player:getMagicLevelPercent())
-    if not profileChange then
-        onStatesChange(player, player:getStates(), 0)
-    end
+    onMagicLevelChange(player, player:getMagicLevel(),
+                       player:getMagicLevelPercent())
+    if not profileChange then onStatesChange(player, player:getStates(), 0) end
     onHealthChange(player, player:getHealth(), player:getMaxHealth())
     onManaChange(player, player:getMana(), player:getMaxMana())
     onLevelChange(player, player:getLevel(), player:getLevelPercent())
 
     for i = Skill.Fist, Skill.ManaLeechAmount do
-        onSkillChange(player, i, player:getSkillLevel(i), player:getSkillLevelPercent(i))
+        onSkillChange(player, i, player:getSkillLevel(i),
+                      player:getSkillLevelPercent(i))
         onBaseSkillChange(player, i, player:getSkillBaseLevel(i))
     end
 
@@ -182,18 +188,17 @@ function refresh(profileChange)
 end
 
 function refreshVisibleBars()
-    local ids = {"Experience", "Magic", "Axe", "Club", "Distance", "Fist", "Shielding",
-    "Sword", "Fishing"}
-
+    local ids = {
+        "Experience", "Magic", "Axe", "Club", "Distance", "Fist", "Shielding",
+        "Sword", "Fishing", "Mining", "Crafting", "Woodcutting", "Herbalism", "Enchanting", "Disenchanting"
+    }
     for i, id in ipairs(ids) do
         local panel = topBar[id] or topBar.skills[id]
 
         if panel then
             -- experience is exeption
             if id == "Experience" then
-                if not settings[id] then
-                    panel:setVisible(true)
-                end
+                if not settings[id] then panel:setVisible(true) end
             else
                 panel:setVisible(settings[id] or false)
             end
@@ -283,7 +288,7 @@ function onLevelChange(localPlayer, value, percent)
     if not topBar then return end
     local experienceBar = topBar.Experience.progress
     local levelLabel = topBar.Experience.level
-    experienceBar:setTooltip(tr(experienceTooltip, 100-percent, value + 1))
+    experienceBar:setTooltip(tr(experienceTooltip, 100 - percent, value + 1))
     experienceBar:setPercent(percent)
     levelLabel:setText(value)
     levelLabel:setTextAutoResize(true)
@@ -311,10 +316,15 @@ function setupSkillPanel(id, parent, experience, defaultOff)
     widget:setId(id)
     widget.level:setTooltip(id)
     widget.icon:setTooltip(id)
-    widget.icon:setImageClip({x = iconsTable[id]*9, y = 0, width = 9,height = 9})
+    widget.icon:setImageClip({
+        x = iconsTable[id] * 9,
+        y = 0,
+        width = 9,
+        height = 9
+    })
 
-    if not experience then 
-        widget.progress:setBackgroundColor('#00c000') 
+    if not experience then
+        widget.progress:setBackgroundColor('#00c000')
         widget.shop:setVisible(false)
         widget.shop:disable()
         widget.shop:setWidth(0)
@@ -363,9 +373,8 @@ end
 function setupSkills()
     local t = {
         "Experience", "Magic", "Axe", "Club", "Distance", "Fist", "Shielding",
-        "Sword", "Fishing"
+        "Sword", "Fishing", "Mining", "Crafting", "Woodcutting", "Herbalism", "Enchanting", "Disenchanting"
     }
-
     for i, id in ipairs(t) do
         if not topBar[id] and not topBar.skills[id] then
             setupSkillPanel(id, i == 1 and topBar or topBar.skills, i == 1,
@@ -411,7 +420,9 @@ function setSkillBase(id, value, baseValue)
     if not panel then return end
 
     local progress = topBar.skills[id].progress
-    local progressDesc = "You have " .. 100 - math.floor(progress:getPercent()) .. " percent to go"
+    local progressDesc =
+        "You have " .. 100 - math.floor(progress:getPercent()) ..
+            " percent to go"
     local level = topBar.skills[id].level
 
     if baseValue <= 0 or value < 0 then return end
@@ -444,32 +455,28 @@ end
 function onSkillChange(localPlayer, id, level, percent)
     id = id + 1
     local t = {
-        "Fist", "Club", "Sword", "Axe", "Distance", "Shielding", "Fishing"
+        "Axe", "Club", "Distance", "Fist", "Shielding", "Sword", "Fishing",
+        "Mining", "Crafting", "Woodcutting", "Herbalism", "Enchanting", "Disenchanting"
     }
-
-    -- imbues, ignore
     if id > #t then return end
-
     setSkillValue(t[id], level)
     setSkillPercent(t[id], percent)
-
     setSkillBase(t[id], level, localPlayer:getSkillBaseLevel(id - 1))
 end
 
 function onBaseSkillChange(localPlayer, id, baseLevel)
     id = id + 1
     local t = {
-        "Fist", "Club", "Sword", "Axe", "Distance", "Shielding", "Fishing"
+        "Axe", "Club", "Distance", "Fist", "Shielding", "Sword", "Fishing",
+        "Mining", "Crafting", "Woodcutting", "Herbalism", "Enchanting", "Disenchanting"
     }
-
-    -- imbues, ignore
     if id > #t then return end
-
     setSkillBase(id, localPlayer:getSkillLevel(id), baseLevel)
 end
 
 function save()
-    local settingsFile = modules.client_profiles.getSettingsFilePath("topbar.json")
+    local settingsFile = modules.client_profiles.getSettingsFilePath(
+                             "topbar.json")
 
     local status, result = pcall(function() return json.encode(settings, 2) end)
     if not status then
@@ -487,7 +494,8 @@ function save()
 end
 
 function load()
-    local settingsFile = modules.client_profiles.getSettingsFilePath("topbar.json")
+    local settingsFile = modules.client_profiles.getSettingsFilePath(
+                             "topbar.json")
 
     if g_resources.fileExists(settingsFile) then
         local status, result = pcall(function()
