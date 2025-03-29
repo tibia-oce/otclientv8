@@ -142,6 +142,59 @@ function refreshContainerPages(container)
   end
 end
 
+local function getFrame(v)
+  if v >= 20000000 then
+      return '/images/rarity/rarity_transcendent'
+  elseif v >= 10000000 then 
+      return '/images/rarity/rarity_abyssal'
+  elseif v >= 5000000 then
+      return '/images/rarity/rarity_eternal'
+  elseif v >= 2000000 then
+      return '/images/rarity/rarity_chaos'
+  elseif v >= 1000000 then
+      return '/images/rarity/rarity_mythic'
+  elseif v >= 300000 then
+      return '/images/rarity/rarity_exotic'
+  elseif v >= 120000 then
+      return '/images/rarity/rarity_legendary'
+  elseif v >= 50000 then
+      return '/images/rarity/rarity_epic'
+  elseif v >= 10000 then
+      return '/images/rarity/rarity_rare'
+  elseif v >= 1000 then
+      return '/images/rarity/rarity_uncommon'
+  else
+      return '/images/rarity/item'
+  end
+end
+
+local ItemsTable = require("items_table")
+local function setFrames()
+  for _, container in pairs(g_game.getContainers()) do
+      local window = container.itemsPanel
+      for i, child in pairs(window:getChildren()) do
+          local itemId = child:getItemId()
+          if itemId ~= 0 then
+              local item = Item.create(itemId)
+              local itemName = item and item:getMarketData().name:lower() or nil
+              if itemName then
+                  local itemPrice = ItemsTable[itemName]
+                  if itemPrice then
+                      local frame = getFrame(itemPrice)
+                      child:setImageSource(frame)
+                  else
+                      child:setImageSource('/images/rarity/item')
+                  end
+              else
+                  child:setImageSource('/images/rarity/item')
+              end
+            else
+              child:setImageSource('/images/rarity/item') 
+          end
+      end
+  end
+end
+
 function onContainerOpen(container, previousContainer)
   local containerWindow
   if previousContainer then
@@ -258,7 +311,7 @@ function onContainerOpen(container, previousContainer)
     local filledLines = math.max(math.ceil(container:getItemsCount() / layout:getNumColumns()), 1)
     containerWindow:setContentHeight(filledLines*cellSize.height)
   end
-
+  setFrames()
   containerWindow:setup()
 end
 
@@ -269,12 +322,14 @@ end
 function onContainerChangeSize(container, size)
   if not container.window then return end
   refreshContainerItems(container)
+  setFrames()
 end
 
 function onContainerUpdateItem(container, slot, item, oldItem)
   if not container.window then return end
   local itemWidget = container.itemsPanel:getChildById('item' .. slot)
   itemWidget:setItem(item)
+  setFrames()
 
   local categoryIdWidget = itemWidget:getChildById('lootCategoryId')
   categoryIdWidget:hide()

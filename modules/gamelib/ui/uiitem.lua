@@ -4,6 +4,7 @@ function UIItem:onDragEnter(mousePos)
   local item = self:getItem()
   if not item then return false end
 
+	modules.game_tooltip.m_TooltipFunction.destroyByItem(item:getId())
   self:setBorderWidth(1)
   self.currentDragThing = item
   g_mouse.pushCursor('target')
@@ -38,6 +39,7 @@ function UIItem:onDrop(widget, mousePos, forced)
   local itemPos = item:getPosition()
   if itemPos.x == toPos.x and itemPos.y == toPos.y and itemPos.z == toPos.z then return false end
 
+	modules.game_tooltip.m_TooltipFunction.destroyByItem(item:getId())
   if item:getCount() > 1 then
     modules.game_interface.moveStackableItem(item, toPos)
   else
@@ -59,15 +61,22 @@ function UIItem:onDestroy()
 end
 
 function UIItem:onHoverChange(hovered)
+	if not hovered then
+		modules.game_tooltip.m_TooltipFunction.destroy()
+	end
+
   UIWidget.onHoverChange(self, hovered)
     
-  if self:isVirtual() or not self:isDraggable() then return end
+	local item = self:getItem()
+  local virtual = self:isVirtual() or not self:isDraggable()
+  if item and hovered then
+    modules.game_tooltip.m_TooltipFunction.create(self:getPosition(), item, virtual)
+  end
+
+  if virtual then return end
 
   local draggingWidget = g_ui.getDraggingWidget()
   if draggingWidget and self ~= draggingWidget then
-    local item = draggingWidget.currentDragThing
-    if not item or not item:isItem() then return end
-    
     local gotMap = draggingWidget:getClassName() == 'UIGameMap'
     local gotItem = draggingWidget:getClassName() == 'UIItem' and not draggingWidget:isVirtual()
     if hovered and (gotItem or gotMap) then
@@ -86,10 +95,16 @@ function UIItem:onMouseRelease(mousePosition, mouseButton)
     return true
   end
 
+  local item = self:getItem()
+  if not item then
+    return false
+  end
+
+	modules.game_tooltip.m_TooltipFunction.destroyByItem(item:getId())
+
   if self:isVirtual() then return false end
 
-  local item = self:getItem()
-  if not item or not self:containsPoint(mousePosition) then return false end
+  if not self:containsPoint(mousePosition) then return false end
 
   if modules.client_options.getOption('classicControl') and not g_app.isMobile() and
      ((g_mouse.isPressed(MouseLeftButton) and mouseButton == MouseRightButton) or
